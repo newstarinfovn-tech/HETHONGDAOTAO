@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="referrer" content="no-referrer">
+<title>Newstar - Ôn Thi & Sát Hạch</title>
+<!-- Tailwind cho Tab Tài liệu -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   CÀI ĐẶT CHUNG (GIAO DIỆN SÁNG ĐỒNG BỘ)
+   ========================================================= */
+:root {
+    --brand-blue: #1e3a8a;
+    --brand-blue-light: #2563eb;
+    --brand-gold: #d4af37;
+    --bg-body: #f8fafc;
+    --bg-card: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+    margin:0;background:var(--bg-body);color:var(--text-main);
+    font-family:'Inter','Segoe UI',Tahoma,sans-serif;min-height:100vh;overflow-x:hidden
+}
+.hidden{display:none!important}
+button{font-family:inherit}
+
+/* HEADER SÁNG MÀU */
+#hdr{
+    background:linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1e3a8a 100%);
+    color:#fff;padding:12px 20px;border-bottom:3px solid var(--brand-gold);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+    box-shadow:0 4px 15px rgba(30,58,138,0.2);
+}
+#hdr .logo-group{display:flex;align-items:center;gap:12px;}
+#hdr .logo-group img{
+    height:48px;width:48px;border-radius:50%;object-fit:cover;background:#fff;
+    border:2px solid var(--brand-gold);box-shadow:0 0 10px rgba(212,175,55,0.5);
+}
+#hdr h1{margin:0;font-size:15px;text-transform:uppercase;color:var(--brand-gold);letter-spacing:0.5px;font-weight:800;}
+#userBox{display:flex;gap:10px;align-items:center;font-size:13px;color:#fff;font-weight:bold}
+#userBox button{background:#ef4444;padding:6px 12px;font-size:12px;border:none;border-radius:6px;color:#fff;font-weight:bold;cursor:pointer;transition:0.2s;}
+#userBox button:hover{background:#dc2626;}
+
+/* TABS SÁNG MÀU */
+#tabs{display:flex;background:#fff;border-bottom:2px solid var(--border-color);overflow-x:auto;box-shadow:0 2px 5px rgba(0,0,0,0.02);}
+#tabs button{
+    flex:1;min-width:120px;background:transparent;color:#64748b;border:none;
+    padding:14px 10px;font-size:13px;font-weight:700;cursor:pointer;
+    border-bottom:3px solid transparent;transition:.2s;white-space:nowrap;
+}
+#tabs button.active{color:var(--brand-blue);border-bottom-color:var(--brand-blue);background:#f1f5f9;}
+#tabs button:disabled{opacity:.4;cursor:not-allowed;background:#f8fafc;}
+
+/* PANE CHUNG */
+.pane{padding:24px 16px;max-width:1000px;margin:0 auto;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.pane h2{color:var(--brand-blue);font-size:20px;margin-top:0;font-weight:800;}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:24px;box-shadow:0 4px 12px rgba(0,0,0,0.03);}
+
+/* FORM ĐĂNG KÝ */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-row.full{grid-template-columns:1fr}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+.field label{display:block;color:var(--brand-blue);font-size:13px;font-weight:700;margin-bottom:6px}
+.field input,.field select{
+    width:100%;padding:12px;background:#f8fafc;color:var(--text-main);
+    border:2px solid var(--border-color);border-radius:8px;font-size:14px;transition:0.2s;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--brand-blue-light);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,0.1);}
+.field input:disabled,.field select:disabled{opacity:.6;cursor:not-allowed}
+.radio-g{display:flex;gap:20px;flex-wrap:wrap;padding-top:5px}
+.radio-g label{display:flex;align-items:center;gap:6px;color:var(--text-main);font-weight:500;cursor:pointer;font-size:14px}
+.consent{display:flex;gap:10px;padding:14px;background:#eff6ff;border-left:4px solid var(--brand-blue);border-radius:8px;margin:16px 0;font-size:13px;line-height:1.6;color:#1e40af;}
+.consent input{margin-top:3px;width:18px;height:18px;flex-shrink:0;cursor:pointer;}
+
+/* NÚT BẤM */
+.btn-main{
+    width:100%;padding:14px;background:var(--brand-blue);color:#fff;border:none;border-radius:8px;
+    font-size:15px;font-weight:700;cursor:pointer;transition:.2s;box-shadow:0 4px 10px rgba(30,58,138,0.3);
+}
+.btn-main:hover:not(:disabled){background:var(--brand-blue-light);transform:translateY(-2px);}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* THÔNG BÁO */
+.banner{background:#eff6ff;border-left:4px solid var(--brand-blue-light);padding:14px 16px;border-radius:8px;font-size:14px;line-height:1.6;margin-bottom:16px;color:#1e40af;}
+.banner.success{background:#f0fdf4;border-color:#22c55e;color:#166534}
+.banner.warn{background:#fffbeb;border-color:#f59e0b;color:#92400e}
+.banner.danger{background:#fef2f2;border-color:#ef4444;color:#991b1b}
+
+/* KHUNG ĐẾM NGƯỢC */
+.lock-box{background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;padding:24px;text-align:center;margin-bottom:20px;box-shadow:0 4px 15px rgba(245,158,11,0.15)}
+.lock-title{font-size:16px;color:#92400e;margin-bottom:10px;font-weight:800}
+.lock-date{font-size:28px;color:#d97706;font-weight:900;margin-bottom:15px;text-transform:uppercase;letter-spacing:1px}
+.lock-remain-label{font-size:14px;color:#b45309;margin-bottom:6px;font-weight:600;}
+.lock-remain-val{font-size:32px;color:#ef4444;font-weight:800;font-variant-numeric:tabular-nums; text-shadow: 0 2px 5px rgba(239,68,68,0.2)}
+
+/* ÔN THI (TAB 2) */
+#t2-timer{background:#fff;padding:8px 16px;border-radius:20px;color:#d97706;font-weight:800;font-size:14px;display:inline-block;margin-bottom:10px;border:1px solid #fcd34d;}
+#t2-cam,#t3-cam{position:fixed;top:80px;left:16px;width:110px;height:140px;background:#000;border:3px solid var(--brand-blue);border-radius:12px;overflow:hidden;z-index:30;cursor:move;touch-action:none;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+#t3-cam{width:120px;height:90px;}
+#t2-cam video,#t3-cam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);pointer-events:none}
+#t2-cam .lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.8);color:#fff;font-size:10px;text-align:center;padding:4px;pointer-events:none}
+.t2-stage{display:flex;flex-direction:column;align-items:center;padding:14px 0}
+.t2-avatar{width:100%;max-width:320px;max-height:40vh;object-fit:cover;border-radius:16px;border:4px solid transparent;transition:.3s;box-shadow:0 10px 25px rgba(0,0,0,0.1);}
+.t2-avatar.speaking{animation:t2glow 1.2s infinite}
+@keyframes t2glow{0%,100%{box-shadow:0 0 20px rgba(30,58,138,0.6);border-color:var(--brand-blue)}50%{box-shadow:0 0 35px rgba(37,99,235,0.8);border-color:var(--brand-blue-light)}}
+.t2-status{margin-top:16px;background:#fff;padding:14px 20px;border-radius:12px;font-size:14px;color:var(--brand-blue);text-align:center;max-width:520px;line-height:1.5;box-shadow:0 4px 15px rgba(0,0,0,0.05);border:1px solid var(--border-color);font-weight:600;}
+.t2-ctrl{background:#fff;padding:20px;border-radius:16px;margin-top:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 15px rgba(0,0,0,0.03);border:1px solid var(--border-color);}
+.t2-lessons{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.t2-lessons button{padding:14px 8px;background:var(--brand-blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:0.2s;}
+.t2-lessons button:hover:not(:disabled){background:var(--brand-blue-light);}
+.t2-lessons button:disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed}
+.t2-speed{display:none;align-items:center;gap:10px;flex-wrap:wrap;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid var(--border-color);}
+.t2-speed.show{display:flex}
+.t2-speed span{color:var(--brand-blue);font-weight:700;font-size:13px}
+.t2-speed button{background:#fff;color:var(--text-main);padding:8px 14px;font-size:13px;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;font-weight:600;transition:0.2s;}
+.t2-speed button:hover{background:#f1f5f9;}
+.t2-class{display:none;flex-direction:column;gap:10px}
+.t2-class.show{display:flex}
+.t2-class button{padding:14px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;transition:0.2s;}
+.t2-class button:disabled{opacity:.5;cursor:not-allowed}
+#t2-lecture{background:#f59e0b}
+#t2-next{background:#8b5cf6;display:none}
+#t2-mic{background:#ef4444}
+#t2-unlock{background:#64748b;font-size:13px;padding:10px;display:none;}
+#t2-checkout{background:#22c55e;display:none}
+#t2-checkout.active{display:block}
+
+/* THI LÝ THUYẾT (TAB 3) */
+.t3-head{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:14px 20px;border-radius:12px;margin-bottom:16px;flex-wrap:wrap;gap:10px;border:1px solid var(--border-color);box-shadow:0 2px 8px rgba(0,0,0,0.02);font-weight:700;color:var(--brand-blue);}
+#t3-timer{color:#16a34a;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+#t3-timer.warn{color:#ef4444;animation:blink .8s infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:.3}}
+.t3-progress{background:#e2e8f0;height:10px;border-radius:20px;overflow:hidden;margin-bottom:16px}
+.t3-progress>div{height:100%;background:linear-gradient(90deg,var(--brand-blue-light),var(--brand-gold));width:0;transition:.3s}
+.t3-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;padding:12px;background:#fff;border-radius:12px;margin-bottom:16px;border:1px solid var(--border-color);}
+@media(max-width:600px){.t3-grid{grid-template-columns:repeat(6,1fr)}}
+.t3-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#64748b;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:0.2s;}
+.t3-cell:hover{background:#e2e8f0;}
+.t3-cell.answered{background:#22c55e;color:#fff}
+.t3-cell.current{border-color:var(--brand-blue);box-shadow:0 0 0 3px rgba(30,58,138,0.2);background:#fff;color:var(--brand-blue);}
+.t3-card{background:#fff;padding:24px;border-radius:12px;border:1px solid var(--border-color);box-shadow:0 4px 15px rgba(0,0,0,0.03);}
+.t3-qh{display:flex;justify-content:space-between;color:var(--brand-blue);font-weight:800;font-size:14px;margin-bottom:14px}
+.t3-qt{font-size:16px;line-height:1.6;margin-bottom:20px;font-weight:600;}
+.t3-opt{display:flex;align-items:flex-start;padding:14px 18px;background:#f8fafc;border-radius:8px;margin-bottom:10px;cursor:pointer;border:2px solid transparent;font-size:15px;line-height:1.5;transition:0.2s;}
+.t3-opt:hover{background:#f1f5f9;}
+.t3-opt.sel{background:#eff6ff;border-color:var(--brand-blue);}
+.t3-opt .lt{font-weight:800;color:var(--brand-blue);margin-right:14px;min-width:20px}
+.t3-nav{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.t3-nav button{flex:1;min-width:100px;padding:14px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;transition:0.2s;}
+.t3-nav button:disabled{opacity:.4;cursor:not-allowed}
+#t3-prev{background:#64748b}
+#t3-next{background:var(--brand-blue-light)}
+#t3-submit{background:#ea580c}
+.t3-result{text-align:center;padding:30px 10px}
+.t3-status{font-size:40px;font-weight:900;margin:20px 0;letter-spacing:4px}
+.t3-status.pass{color:#16a34a;text-shadow:0 0 30px rgba(22,163,74,.3)}
+.t3-status.fail{color:#ef4444;text-shadow:0 0 30px rgba(239,68,68,.3)}
+.t3-score{font-size:56px;font-weight:900;color:#d97706}
+.t3-score small{font-size:24px;color:#94a3b8}
+.t3-review-item{background:#fff;padding:16px;border-radius:10px;margin-bottom:12px;border:1px solid var(--border-color);border-left:5px solid #cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,0.02);}
+.t3-review-item.c{border-left-color:#22c55e}
+.t3-review-item.w{border-left-color:#ef4444}
+.t3-rq{font-weight:700;font-size:14px;margin-bottom:10px;line-height:1.5;color:var(--text-main);}
+.t3-ra{font-size:13px;line-height:1.6;margin-bottom:8px;color:#475569;}
+.t3-ra .c{color:#16a34a;font-weight:700;}
+.t3-ra .w{color:#ef4444;font-weight:700;}
+.t3-re{font-size:13px;color:#475569;padding-top:10px;border-top:1px dashed var(--border-color);line-height:1.6;}
+
+/* THI THỰC HÀNH (TAB 4) */
+.t4-stepbar{display:flex;gap:8px;margin-bottom:24px}
+.t4-step{flex:1;padding:12px 8px;background:#f1f5f9;border-radius:8px;text-align:center;font-size:13px;color:#64748b;border:2px solid transparent;font-weight:700;transition:0.3s;}
+.t4-step.active{background:#eff6ff;border-color:var(--brand-blue);color:var(--brand-blue);}
+.t4-step.done{background:#f0fdf4;border-color:#22c55e;color:#166534;}
+.t4-instr{background:#fff;border-radius:12px;padding:24px;border:1px solid var(--border-color);border-left:5px solid var(--brand-blue);margin-bottom:20px;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.03);}
+.t4-instr h3{margin:0 0 12px;color:var(--brand-blue);font-size:18px;font-weight:800;}
+.t4-instr p{margin:0 0 12px 0;line-height:1.6;font-size:15px;color:#475569}
+.t4-instr .warn{color:#d97706;font-weight:700;margin-top:10px;font-size:14px;background:#fffbeb;display:inline-block;padding:6px 12px;border-radius:6px;}
+.t4-upbar{height:10px;background:#e2e8f0;border-radius:6px;overflow:hidden;margin-top:20px}
+.t4-upbar>div{height:100%;background:linear-gradient(90deg,var(--brand-blue-light),#22c55e);width:0;transition:.3s}
+.t4-upmsg{font-size:14px;color:#64748b;margin-top:10px;text-align:center;font-weight:700}
+.t4-result{text-align:center;padding:40px 20px}
+.t4-result .ic{font-size:80px}
+.t4-result h2{color:#16a34a;font-size:28px;margin:16px 0}
+.t4-result p{color:#475569;font-size:15px;line-height:1.6}
+.t4-locked{text-align:center;padding:50px 20px}
+.t4-locked .ic{font-size:70px;margin-bottom:16px}
+.t4-locked h2{font-size:24px;color:#d97706;margin:0 0 12px}
+.t4-locked p{color:#64748b;line-height:1.6;font-size:15px;}
+
+/* MODALS & LOADING */
+.mo{position:fixed;inset:0;background:rgba(15,23,42,.8);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:center;z-index:200;padding:16px}
+.mo.hidden{display:none!important}
+.mo-box{background:#fff;padding:28px;border-radius:16px;width:100%;max-width:400px;box-shadow:0 20px 40px rgba(0,0,0,0.2);}
+.mo-box h3{margin:0 0 8px;color:var(--brand-blue);font-size:20px;font-weight:800;}
+.mo-box p{color:#64748b;font-size:13px;line-height:1.5;margin:4px 0 16px}
+.mo-box input,.mo-box select{width:100%;padding:12px;margin:8px 0;background:#f8fafc;color:var(--text-main);border:2px solid var(--border-color);border-radius:8px;font-size:14px}
+.mo-box input:focus,.mo-box select:focus{outline:none;border-color:var(--brand-blue);}
+.mo-box button{width:100%;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px}
+.mo-box .ok{background:var(--brand-blue);color:#fff}
+.mo-box .ok:hover{background:var(--brand-blue-light);}
+.mo-box .cancel{background:#f1f5f9;color:#475569;margin-top:8px}
+.mo-box .cancel:hover{background:#e2e8f0;}
+#loading{position:fixed;inset:0;background:rgba(255,255,255,.9);backdrop-filter:blur(4px);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:300;color:var(--brand-blue);font-size:16px;font-weight:700}
+.spin{width:50px;height:50px;border:4px solid #e2e8f0;border-top-color:var(--brand-blue);border-radius:50%;animation:sp 1s linear infinite;margin-bottom:16px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* =========================================================
+   CSS RIÊNG CHO TAB TÀI LIỆU (SỬA LỖI VỠ GRID)
+   ========================================================= */
+.tl-wrapper { background: #f8fafc; color: #1e293b; min-height: calc(100vh - 120px); margin: 0; padding: 20px 16px; }
+.tl-wrapper * { box-sizing: border-box; }
+.tl-header-gradient { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1e3a8a 100%); position: relative; overflow: hidden; border-radius: 12px; padding: 20px; color: #fff; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(30,58,138,0.3); }
+.tl-header-gradient::before { content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+.tl-header-gradient::after { content: ''; position: absolute; bottom: -60%; left: -5%; width: 250px; height: 250px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+.tl-header-gradient h1 { color: #d4af37; font-size: 20px; font-weight: 800; text-transform: uppercase; margin: 0 0 4px 0; position: relative; z-index: 1; }
+.tl-header-gradient p { margin: 0; font-size: 13px; opacity: 0.8; position: relative; z-index: 1; }
+.tl-header-gradient .logo { height: 50px; width: 50px; border-radius: 50%; border: 2px solid #d4af37; object-fit: cover; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+.glass-panel { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); }
+
+/* Subject cards */
+.tl-subject-card { position: relative; background: #ffffff; border-radius: 16px; border: 1px solid #e5e7eb; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; height: 100%; justify-content: center; }
+.tl-subject-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #1e3a8a, #d4af37); opacity: 0; transition: opacity 0.35s; }
+.tl-subject-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -12px rgba(30, 58, 138, 0.25); border-color: #cbd5e1; }
+.tl-subject-card:hover::before { opacity: 1; }
+.tl-subject-card .icon-wrap { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; background: linear-gradient(135deg, #1e3a8a, #2563eb); box-shadow: 0 8px 20px -6px rgba(30, 58, 138, 0.4); margin-bottom: 16px; transition: transform 0.35s; flex-shrink: 0; }
+.tl-subject-card:hover .icon-wrap { transform: scale(1.08) rotate(-3deg); }
+.tl-subject-card.disabled { opacity: 0.55; cursor: not-allowed; background: #f8fafc; }
+.tl-subject-card.disabled:hover { transform: none; box-shadow: none; }
+.tl-subject-card.disabled .icon-wrap { background: linear-gradient(135deg, #94a3b8, #cbd5e1); box-shadow: none; }
+
+/* Search */
+.tl-search-wrap { position: relative; max-width: 480px; margin: 0 auto 40px; }
+.tl-search-wrap input { width: 100%; padding: 14px 20px 14px 52px; border: 2px solid #e2e8f0; border-radius: 100px; font-size: 15px; background: #ffffff; transition: all 0.3s; outline: none; color: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.tl-search-wrap input:focus { border-color: #1e3a8a; box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.12), 0 4px 12px rgba(0,0,0,0.06); }
+.tl-search-wrap input::placeholder { color: #94a3b8; }
+.tl-search-wrap .search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 17px; pointer-events: none; transition: color 0.3s; }
+.tl-search-wrap input:focus ~ .search-icon { color: #1e3a8a; }
+
+/* Empty State */
+.tl-empty-state { display: none; text-align: center; padding: 60px 20px; color: #64748b; }
+.tl-empty-state.show { display: block; }
+.tl-empty-state i { font-size: 48px; color: #cbd5e1; margin-bottom: 16px; display: block; }
+
+/* Question Cards */
+.tl-question-card { background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.3s; }
+.tl-question-card:hover { box-shadow: 0 8px 24px -8px rgba(0,0,0,0.1); }
+
+/* Print CSS */
+@media print {
+    body { background: white; }
+    .no-print { display: none !important; }
+    .tl-print-card { border: none !important; box-shadow: none !important; border-bottom: 1px solid #e2e8f0 !important; break-inside: avoid; margin-bottom: 1.5rem !important; padding-left: 0 !important; padding-right: 0 !important; }
+}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <div class="logo-group">
+    <img src="logo newstar.png" alt="Logo Newstar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23b71c1c%22 stroke=%22%23f1c40f%22 stroke-width=%225%22/%3E%3Ctext x=%2250%22 y=%2255%22 fill=%22%23fff%22 font-size=%2212%22 text-anchor=%22middle%22%3ENEWSTAR%3C/text%3E%3C/svg%3E'">
+    <h1>🎓 TRƯỜNG ĐÀO TẠO QUỐC TẾ NEWSTAR — ÔN THI SÁT HẠCH TAY NGHỀ</h1>
+  </div>
+  <div id="userBox" class="hidden"><span id="userName"></span><button onclick="logout()">Đăng xuất</button></div>
+</header>
+
+<nav id="tabs">
+  <button data-tab="1" class="active" onclick="switchTab(1)">📝 ĐĂNG KÝ / ĐĂNG NHẬP</button>
+  <button data-tab="0" onclick="switchTab(0)">📚 TÀI LIỆU ÔN THI</button>
+  <button data-tab="2" disabled onclick="switchTab(2)">📖 ÔN THI</button>
+  <button data-tab="3" disabled onclick="switchTab(3)">📝 THI LÝ THUYẾT</button>
+  <button data-tab="4" disabled onclick="switchTab(4)">💅 THI THỰC HÀNH</button>
+</nav>
+
+<!-- TAB 1 -->
+<main id="tab-1" class="pane">
+  <div class="card">
+    <div style="text-align:center; margin-bottom: 20px;">
+      <img src="logo newstar.png" alt="Logo Newstar" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #00a8ff; box-shadow:0 4px 15px rgba(0,168,255,0.4);" onerror="this.style.display='none'">
+    </div>
+    
+    <h2 style="text-align:center;">📝 Phiếu Đăng Ký / Đăng Nhập</h2>
+    <div id="t1-banner" class="banner hidden"></div>
+    <p style="color:#aaa;font-size:13px;margin:0 0 16px;line-height:1.5;text-align:center;">
+      <b>Đã có tài khoản?</b> Nhập <b>Họ tên (IN HOA)</b> + <b>Số CCCD</b> + <b>Chọn Ngành học</b>. Hệ thống sẽ tự động đăng nhập vào đúng ngành.<br>
+      <b>Chưa có tài khoản?</b> Điền đầy đủ tất cả thông tin để đăng ký mới.
+    </p>
+    <form id="t1-form" onsubmit="event.preventDefault();submitReg();">
+      <div class="form-row">
+        <div class="field">
+          <label>Họ và tên (CHỮ IN HOA CÓ DẤU) <span style="color:#e74c3c">*</span></label>
+          <input id="t1-name" placeholder="NGUYỄN HƯƠNG GIANG" required style="text-transform:uppercase">
+        </div>
+        <div class="field"><label>Ngày tháng năm sinh</label><input id="t1-dob" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Số CCCD (12 số) <span style="color:#e74c3c">*</span></label><input id="t1-cccd" inputmode="numeric" maxlength="12" pattern="[0-9]{12}" placeholder="012345678901" required></div>
+        <div class="field"><label>Email</label><input id="t1-email" type="email" placeholder="email@example.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Điện thoại</label><input id="t1-phone" type="tel" pattern="(0[35789])[0-9]{8}" placeholder="09xxxxxxxx"></div>
+        <div class="field"><label>Thời gian học nghề</label>
+          <div class="radio-g">
+            <label><input type="radio" name="exp" value="Dưới 3 tháng"> Dưới 3 tháng</label>
+            <label><input type="radio" name="exp" value="Trên 3 tháng"> Trên 3 tháng</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="field">
+          <label>Ngành nghề (Chọn ngành muốn đăng nhập / đăng ký) <span style="color:#e74c3c">*</span></label>
+          <select id="t1-major" required></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Học tại cơ sở (địa chỉ)</label><input id="t1-address" placeholder="Số nhà, đường, quận/huyện..."></div>
+        <div class="field"><label>SĐT liên hệ</label><input id="t1-contact-phone" type="tel" pattern="(0[35789])[0-9]{8}" placeholder="09xxxxxxxx"></div>
+      </div>
+      <div class="consent">
+        <input type="checkbox" id="t1-consent">
+        <label for="t1-consent" style="cursor:pointer">Tôi xin cam đoan mọi thông tin đã cung cấp ở trên là hoàn toàn chính xác. Bằng văn bản này, tôi có nguyện vọng đăng ký tham gia khóa ôn tập và kỳ thi sát hạch tay nghề.</label>
+      </div>
+      <button type="submit" class="btn-main" id="t1-submit">✅ GỬI XÁC NHẬN THÔNG TIN / ĐĂNG NHẬP</button>
+    </form>
+  </div>
+</main>
+
+<!-- TAB 0: TÀI LIỆU ÔN THI (Giao diện sáng) -->
+<main id="tab-0" class="pane hidden" style="padding: 0; max-width: 100%;">
+  <div class="tl-wrapper">
+    <!-- HEADER -->
+    <header class="tl-header-gradient flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center gap-4">
+            <img src="logo.jpg" alt="Newstar Logo" onerror="this.src='https://via.placeholder.com/150?text=Newstar'" class="logo">
+            <div>
+                <h1>Hệ Thống Thư Viện Ôn Thi Trực Tuyến</h1>
+                <p><i class="fas fa-book-open text-[#d4af37]"></i> Danh Mục Tài Liệu Ôn Thi</p>
+            </div>
+        </div>
+        <button id="btn-back-tl" class="hidden bg-[#d4af37] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#b8941f] transition-all shadow-lg flex items-center gap-2" onclick="tl_backToHome()">
+            <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Quay lại danh mục</span>
+        </button>
+    </header>
+
+    <!-- SCREEN HOME -->
+    <div id="tl-screen-home">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-xs font-semibold mb-4 border border-blue-100">
+                <i class="fas fa-graduation-cap"></i> THƯ VIỆN TÀI LIỆU
+            </div>
+            <h2 class="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-3 tracking-tight">HỆ THỐNG PHÂN TÍCH DỮ LIỆU TỰ ĐỘNG</h2>
+            <p class="text-slate-600 max-w-2xl mx-auto text-sm md:text-base">Nhấp vào môn học để xem và in toàn bộ câu hỏi trắc nghiệm chuyên sâu.</p>
+        </div>
+        <div class="tl-search-wrap">
+            <input type="text" id="tl-search-input" placeholder="Tìm kiếm môn học...">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+        <!-- Grid môn học, đã thêm gap và chia cột chuẩn -->
+        <div id="tl-subject-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        
+        <div id="tl-empty-state" class="tl-empty-state">
+            <i class="fas fa-folder-open"></i>
+            <h3 class="text-lg font-semibold text-slate-700 mb-1">Không tìm thấy môn học</h3>
+            <p class="text-sm">Thử tìm kiếm với từ khóa khác nhé!</p>
+        </div>
+    </div>
+
+    <!-- SCREEN DETAIL -->
+    <div id="tl-screen-detail" class="hidden max-w-5xl mx-auto">
+        <div class="glass-panel rounded-2xl shadow-xl p-6 md:p-8 border border-slate-200">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-slate-200 no-print">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="inline-block w-2 h-6 bg-gradient-to-b from-[#1e3a8a] to-[#d4af37] rounded-full"></span>
+                        <h2 id="tl-detail-title" class="text-2xl font-bold text-[#1e3a8a]">Tên Môn Học</h2>
+                    </div>
+                    <p id="tl-detail-count" class="text-slate-600 font-medium bg-blue-50 inline-block px-3 py-1 rounded-full text-sm border border-blue-100 mt-1">Đang tải dữ liệu...</p>
+                </div>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2.5 rounded-lg transition-all shadow-md flex items-center font-semibold gap-2 whitespace-nowrap"><i class="fas fa-print"></i> In tài liệu</button>
+            </div>
+            <div class="hidden print:block mb-8 text-center">
+                <h1 class="text-2xl font-bold uppercase mb-2">BỘ ĐỀ CƯƠNG ÔN THI TRẮC NGHIỆM</h1>
+                <h2 id="tl-print-title" class="text-xl font-bold text-[#1e3a8a] uppercase">TÊN MÔN HỌC</h2>
+            </div>
+            <div id="tl-detail-content" class="space-y-5"></div>
+        </div>
+    </div>
+  </div>
+</main>
+
+<!-- TAB 2 -->
+<main id="tab-2" class="pane hidden">
+  <div id="t2-lock-info"></div>
+  <div id="t2-timer">⏱ 00:00</div>
+  <div id="t2-cam" class="hidden"><video id="t2-video" autoplay playsinline muted></video><div class="lbl">Camera HV</div></div>
+  <div class="t2-stage">
+    <img id="t2-avatar" class="t2-avatar" src="assets/avatar-co-mai.jpg" alt="Cô Mai" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 fill=%22%2300a8ff%22 font-size=%2230%22 text-anchor=%22middle%22%3ECô Mai%3C/text%3E%3C/svg%3E'">
+    <div id="t2-status" class="t2-status">Xin chào!</div>
+  </div>
+  <div class="t2-ctrl">
+    <div class="t2-lessons" id="t2-lessons">
+      <button data-lesson="1" onclick="t2.selectLesson(1)">Buổi 1</button>
+      <button data-lesson="2" onclick="t2.selectLesson(2)" disabled>Buổi 2 🔒</button>
+      <button data-lesson="3" onclick="t2.selectLesson(3)" disabled>Buổi 3 🔒</button>
+    </div>
+    <div class="t2-speed" id="t2-speed"><span>Tốc độ: <span id="t2-speed-disp">1.2x</span></span><button onclick="t2.speedDown()">➖ Chậm</button><button onclick="t2.speedUp()">➕ Nhanh</button></div>
+    <div class="t2-class" id="t2-class">
+      <button id="t2-lecture" onclick="t2.lecture()">📖 Bắt đầu học</button>
+      <button id="t2-next" onclick="t2.next()">⏭️ Qua bài tiếp</button>
+      <button id="t2-mic" onclick="t2.mic()">🎤 Hỏi lại</button>
+      <button id="t2-unlock" onclick="t2.unlock()">🔓 Mở khóa Mạng</button>
+      <button id="t2-checkout" onclick="t2.checkout()">🚪 Kết thúc Buổi học</button>
+    </div>
+  </div>
+</main>
+
+<!-- TAB 3 -->
+<main id="tab-3" class="pane hidden">
+  <div id="t3-welcome"></div>
+  <div id="t3-running" class="hidden">
+    <div id="t3-cam" class="hidden"><video id="t3-video" autoplay playsinline muted></video></div>
+    <div class="t3-head"><span>📝 Bài Thi Lý Thuyết</span><span id="t3-timer">⏱ 45:00</span></div>
+    <div class="t3-progress"><div id="t3-prog-bar"></div></div>
+    <div class="t3-grid" id="t3-grid"></div>
+    <div class="t3-card">
+      <div class="t3-qh"><span>Câu <span id="t3-qn">1</span>/30</span><span id="t3-ans-cnt">Đã trả lời: 0/30</span></div>
+      <div class="t3-qt" id="t3-qt"></div>
+      <div id="t3-opts"></div>
+    </div>
+    <div class="t3-nav">
+      <button id="t3-prev" onclick="t3.prev()">◀ Trước</button>
+      <button id="t3-next" onclick="t3.next()">Tiếp ▶</button>
+      <button id="t3-submit" onclick="t3.submit()" disabled>Nộp Bài</button>
+    </div>
+  </div>
+  <div id="t3-result" class="hidden">
+    <div class="t3-result"><div class="t3-status" id="t3-status"></div><div class="t3-score"><span id="t3-score-num">0</span><small>/30</small></div><div id="t3-msg" style="margin-top:14px;font-size:15px;line-height:1.6;color:#ccc"></div></div>
+    <div id="t3-review"></div>
+    <div style="text-align:center;margin:24px 0"><button class="btn-main" style="max-width:280px" onclick="location.reload()">🔄 Về Trang Chủ</button></div>
+  </div>
+</main>
+
+<!-- TAB 4 -->
+<main id="tab-4" class="pane hidden"><div id="t4-content"></div></main>
+
+<!-- Modals -->
+<div id="verifyModal" class="mo hidden">
+  <div class="mo-box">
+    <h3>🔐 Xác Thực Học Viên</h3>
+    <p>Nhập Họ tên (IN HOA), CCCD và chọn ngành đã đăng ký.</p>
+    <input id="vm-name" placeholder="Họ và tên (IN HOA)" style="text-transform:uppercase">
+    <input id="vm-cccd" placeholder="Số CCCD (12 số)" inputmode="numeric" maxlength="12">
+    <select id="vm-major" required>
+      <option value="">— Chọn ngành —</option>
+    </select>
+    <button class="ok" onclick="submitVerify()">Xác Nhận</button>
+    <button class="cancel" onclick="document.getElementById('verifyModal').classList.add('hidden')">Hủy</button>
+  </div>
+</div>
+
+<div id="loading" class="hidden"><div class="spin"></div><span id="loading-text">Đang xử lý...</span></div>
+
+<!-- Data scripts -->
+<script src="data/majors.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CẤU HÌNH CHUNG
+   ═══════════════════════════════════════════════════════════ */
+const URL_CHINH = 'https://script.google.com/macros/s/AKfycbwcgtVG55gkjoJq4UQyhxNnpQ74gbLUqbDhLlKAsh33_qiAEDWWYOqb9G7h2eAgR8xPYw/exec';
+const URL_VIDEO = 'https://script.google.com/macros/s/AKfycby7CENE4U-2PYQ_rIf98zTZPohwB8wnsyut241gkNYMY71PrBcTWVRNN_GkuT0i2sB0/exec';
+const COZE_BOT_ID = '7708044100599152645';
+const COZE_TOKEN = 'pat_lO9qJF3Cme0LOo4Dv9Fz3HvYjFbi35c0wDjvpG9B7P7CCOblHiqA9t2G6u10lLP1';
+const PROXY = 'https://cors-anywhere.herokuapp.com/';
+const SECRET_VIDEO_TOKEN = 'newstar_thi_2026_xyz_abc_123';
+
+const CONFIG = {
+  lessons: 3,
+  lockLessonDays: 1,
+  lockRetakeExamDays: 1,
+  lockTab3Days: 3,
+  lockTab4Days: 7,
+  examQuestions: 30,
+  passThreshold: 25,
+  examDuration: 45*60
+};
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════ */
+let session = null;
+let student = null;
+let currentTab = 1;
+let pendingTab = 0;
+let theoryCache = {};
+let t2LockInt = null;
+let t3WelcomeInt = null;
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const val = id => ($(id)?.value || '').trim();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function showLoad(m){$('loading').classList.remove('hidden');$('loading-text').innerText=m||'Đang xử lý...'}
+function hideLoad(){$('loading').classList.add('hidden')}
+async function apiCall(url, body){
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  return r.json();
+}
+function fmtTime(s){const m=String(Math.floor(s/60)).padStart(2,'0'),ss=String(s%60).padStart(2,'0');return m+':'+ss}
+function sanitizeName(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_')}
+
+function getUnlockTime(baseTimeIso, daysToWait) {
+  if (!baseTimeIso) return 0;
+  const d = new Date(baseTimeIso);
+  d.setDate(d.getDate() + daysToWait);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function makeDraggable(el) {
+  if (!el) return;
+  let isDragging = false;
+  let startX, startY, initialLeft, initialTop;
+
+  el.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    const rect = el.getBoundingClientRect();
+    el.style.left = rect.left + 'px';
+    el.style.top = rect.top + 'px';
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+
+    startX = e.clientX;
+    startY = e.clientY;
+    initialLeft = rect.left;
+    initialTop = rect.top;
+
+    el.setPointerCapture(e.pointerId);
+    el.style.cursor = 'grabbing';
+  });
+
+  el.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    el.style.left = (initialLeft + dx) + 'px';
+    el.style.top = (initialTop + dy) + 'px';
+  });
+
+  const endDrag = (e) => {
+    isDragging = false;
+    el.style.cursor = 'move';
+    try { el.releasePointerCapture(e.pointerId); } catch(err){}
+  };
+
+  el.addEventListener('pointerup', endDrag);
+  el.addEventListener('pointercancel', endDrag);
+}
+
+function formatRemain(ms){
+  if(ms <= 0) return 'Đã mở khóa!';
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if(d > 0) return d+' ngày '+h+' giờ '+m+' phút';
+  if(h > 0) return h+' giờ '+m+' phút '+s+' giây';
+  if(m > 0) return m+' phút '+s+' giây';
+  return s+' giây';
+}
+
+function fmtDate(iso){
+  if(!iso) return '—';
+  try { return new Date(iso).toLocaleString('vi-VN', {hour12:false}); }
+  catch(e){ return '—'; }
+}
+
+function preprocessSpeech(text){
+  if(!text) return '';
+  return String(text)
+    .replace(/C\s*[-–]\s*C\s*[-–]\s*C\s*[-–]\s*D/gi, 'căn cước công dân')
+    .replace(/\bCCCD\b/g, 'căn cước công dân')
+    .replace(/\bcccd\b/g, 'căn cước công dân');
+}
+
+let speechEngineReady = false;
+function initSpeechEngine(){
+  if(speechEngineReady) return;
+  if(!('speechSynthesis' in window)) return;
+  speechEngineReady = true;
+  try{
+    const warm = new SpeechSynthesisUtterance(' ');
+    warm.volume = 0;
+    warm.rate = 5;
+    warm.lang = 'vi-VN';
+    speechSynthesis.speak(warm);
+    speechSynthesis.getVoices();
+  }catch(e){}
+}
+document.addEventListener('click', initSpeechEngine, {once:true});
+document.addEventListener('touchstart', initSpeechEngine, {once:true});
+document.addEventListener('keydown', initSpeechEngine, {once:true});
+
+/* ═══════════════════════════════════════════════════════════
+   SESSION & STUDENT
+   ═══════════════════════════════════════════════════════════ */
+function saveSession(){if(session)localStorage.setItem('ns_sess',JSON.stringify(session))}
+function loadSession(){try{session=JSON.parse(localStorage.getItem('ns_sess')||'null')}catch(e){session=null}}
+function logout(){
+  if(!confirm('Đăng xuất?'))return;
+  localStorage.removeItem('ns_sess');
+  session=null; student=null;
+  updateUserBox();
+  document.querySelectorAll('#tabs button').forEach((b,i)=>{
+      if(b.dataset.tab == '1'){ b.disabled = false; }
+      else if (b.dataset.tab == '0') { b.disabled = false; }
+      else { b.disabled = true; }
+  });
+  switchTab(1);
+}
+function updateUserBox(){
+  if(session&&session.name){$('userBox').classList.remove('hidden');$('userName').innerText='👤 '+session.name+' — '+session.major;}
+  else $('userBox').classList.add('hidden');
+}
+
+async function refreshStudent(){
+  if(!session)return false;
+  try{
+    const d = await apiCall(URL_CHINH,{action:'getStudent',cccd:session.cccd,major:session.major});
+    if(!d.success)return false;
+    student = d.data;
+    updateLocks();
+    return true;
+  }catch(e){return false}
+}
+
+function updateLocks(){
+  if(!student)return;
+  const now = Date.now();
+  document.querySelector('#tabs [data-tab="2"]').disabled = false;
+
+  let tab3 = false;
+  if(student.lesson3Time) {
+    const unlockTime3 = getUnlockTime(student.lesson3Time, CONFIG.lockTab3Days);
+    tab3 = now >= unlockTime3;
+  }
+  if (student.examStatus === 'Không đạt' && student.examTime) {
+      const unlockRetake = getUnlockTime(student.examTime, CONFIG.lockRetakeExamDays);
+      if (now >= unlockRetake) tab3 = true;
+  }
+  document.querySelector('#tabs [data-tab="3"]').disabled = !tab3 && student.examStatus !== 'Đạt';
+
+  let tab4 = false;
+  if(student.examStatus === 'Đạt' && student.examTime) {
+    const unlockTime4 = getUnlockTime(student.examTime, CONFIG.lockTab4Days);
+    tab4 = now >= unlockTime4;
+  }
+  document.querySelector('#tabs [data-tab="4"]').disabled = !tab4;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB SWITCH
+   ═══════════════════════════════════════════════════════════ */
+async function switchTab(n){
+  if(currentTab === 2 && n !== 2 && typeof t2 !== 'undefined' && t2.stopCam){
+    try { t2.stopCam(); } catch(e){}
+  }
+  
+  if(n>1 && n!==0){
+    if(!session){ openVerify(n); return; }
+    showLoad('Đang tải dữ liệu...');
+    const ok = await refreshStudent();
+    hideLoad();
+    if(!ok){alert('Không tải được dữ liệu. Đăng nhập lại.');logout();return;}
+  }
+  
+  currentTab = n;
+  document.querySelectorAll('.pane').forEach(p=>p.classList.add('hidden'));
+  $('tab-'+n).classList.remove('hidden');
+  
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.tab)===n));
+  
+  if(n===0) tl_init();
+  if(n===2) await t2.init();
+  if(n===3) await t3.init();
+  if(n===4) t4.init();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIC TÀI LIỆU ÔN THI (TAB 0)
+   ═══════════════════════════════════════════════════════════ */
+const tl_renderedMajors = [];
+let tl_initDone = false;
+
+function tl_parseText(raw) {
+    if (!raw || raw.trim() === "") return [];
+    let qs = [];
+    let currentQ = null;
+    let lines = raw.split(/\r?\n/);
+    for (let line of lines) {
+        let tLine = line.trim();
+        if (!tLine) continue;
+        let qMatch = tLine.match(/^(?:C[AÂaâ]U\s*\d+\s*[:\.\-]?|\d+\s*[\.\:\-])\s*(.*)/i);
+        if (qMatch) {
+            if (currentQ) qs.push(currentQ);
+            currentQ = { question: qMatch[1] || tLine, options: [], answer: "", explanation: "" };
+        } else if (currentQ) {
+            if (tLine.match(/^[A-D][\.\:\)]/i)) {
+                currentQ.options.push(tLine);
+            } else if (tLine.match(/^Đáp án/i)) {
+                currentQ.answer = tLine.replace(/^Đáp án\s*(đúng)?\s*[:\.\-]?\s*/i, '').trim();
+            } else if (tLine.match(/^Giải thích/i)) {
+                currentQ.explanation = tLine.replace(/^Giải thích\s*(chi tiết)?\s*[:\.\-]?\s*/i, '').trim();
+            } else {
+                if (currentQ.explanation !== "") currentQ.explanation += " " + tLine;
+                else if (currentQ.answer !== "") currentQ.answer += " " + tLine;
+                else if (currentQ.options.length > 0) currentQ.options[currentQ.options.length - 1] += " " + tLine;
+                else currentQ.question += " " + tLine;
+            }
+        }
+    }
+    if (currentQ) qs.push(currentQ);
+    return qs;
+}
+
+function tl_filterSubjects(keyword) {
+    const kw = keyword.toLowerCase().trim();
+    let visibleCount = 0;
+    tl_renderedMajors.forEach(item => {
+        const match = kw === '' || item.name.toLowerCase().includes(kw);
+        item.card.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+    });
+    if (visibleCount === 0 && tl_renderedMajors.length > 0) {
+        $('tl-empty-state').classList.add('show');
+    } else {
+        $('tl-empty-state').classList.remove('show');
+    }
+}
+
+function tl_loadScript(url) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = url;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+async function tl_init() {
+    if (tl_initDone) return;
+    tl_initDone = true;
+    const grid = $('tl-subject-grid');
+    
+    for (const major of window.NEWSTAR_MAJORS) {
+        if (!major.enabled) continue;
+        
+        const card = document.createElement('div');
+        card.className = "tl-subject-card";
+        card.dataset.name = major.name.toLowerCase();
+        card.innerHTML = `
+            <div class="icon-wrap">
+                <i class="fas ${major.icon || 'fa-book'}"></i>
+            </div>
+            <h3 class="font-bold text-[15px] text-slate-800 mb-2 leading-snug min-h-[42px] flex items-center">${major.name}</h3>
+            <p class="text-xs text-slate-500 font-medium load-status flex items-center gap-1.5">
+                <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Đang kết nối...
+            </p>
+        `;
+        grid.appendChild(card);
+        
+        try {
+            await tl_loadScript(`data/${major.folder}/theory.js`);
+            const rawData = window.NEWSTAR_DATA[major.folder]?.theory;
+            if (rawData && rawData.trim().length > 50) {
+                const qCount = tl_parseText(rawData).length;
+                card.querySelector('.load-status').outerHTML = `
+                    <p class="text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1.5">
+                        <i class="fas fa-check-circle"></i> ${qCount} câu hỏi
+                    </p>`;
+                card.onclick = () => tl_openSubject(major, rawData, qCount);
+                tl_renderedMajors.push({ name: major.name, card });
+            } else {
+                throw new Error("Empty Data");
+            }
+        } catch (e) {
+            card.classList.add('disabled');
+            card.querySelector('.load-status').outerHTML = `
+                <p class="text-xs text-red-500 font-medium flex items-center gap-1.5">
+                    <i class="fas fa-exclamation-circle"></i> Chưa có dữ liệu
+                </p>`;
+            tl_renderedMajors.push({ name: major.name, card });
+        }
+    }
+    tl_filterSubjects($('tl-search-input').value);
+    $('tl-search-input').addEventListener('input', (e) => tl_filterSubjects(e.target.value));
+}
+
+function tl_openSubject(major, rawText, qCount) {
+    const questions = tl_parseText(rawText);
+    $('tl-detail-title').innerText = major.name;
+    $('tl-print-title').innerText = major.name;
+    $('tl-detail-count').innerHTML = `Đã trích xuất thành công: <strong class="text-emerald-700 text-lg">${questions.length}</strong> câu hỏi`;
+    
+    const contentDiv = $('tl-detail-content');
+    contentDiv.innerHTML = '';
+    
+    questions.forEach((q, idx) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = "tl-question-card tl-print-card";
+        
+        let optionsHtml = '<ul class="mt-4 space-y-2">';
+        q.options.forEach(opt => {
+            optionsHtml += `<li class="text-slate-700 pl-4 border-l-2 border-slate-200 py-1 text-sm">${opt}</li>`;
+        });
+        optionsHtml += '</ul>';
+
+        qDiv.innerHTML = `
+            <h4 class="font-bold text-base text-slate-800 leading-snug flex gap-2">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-blue-700 text-xs font-extrabold flex-shrink-0 mt-0.5">${idx + 1}</span>
+                <span>${q.question}</span>
+            </h4>
+            ${optionsHtml}
+            <div class="mt-4 p-4 bg-gradient-to-br from-emerald-50 to-blue-50 rounded-lg border border-emerald-100 break-inside-avoid">
+                <p class="font-bold text-emerald-700 mb-2 text-base flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i>${q.answer}
+                </p>
+                <p class="text-slate-700 text-sm leading-relaxed">
+                    <strong class="text-blue-800 uppercase text-[10px] tracking-wider block mb-1">Giải thích chi tiết:</strong>
+                    ${q.explanation}
+                </p>
+            </div>
+        `;
+        contentDiv.appendChild(qDiv);
+    });
+    
+    $('tl-screen-home').classList.add('hidden');
+    $('tl-screen-detail').classList.remove('hidden');
+    $('btn-back-tl').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function tl_backToHome() {
+    $('tl-screen-detail').classList.add('hidden');
+    $('tl-screen-home').classList.remove('hidden');
+    $('btn-back-tl').classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VERIFY MODAL
+   ═══════════════════════════════════════════════════════════ */
+function openVerify(n){
+  pendingTab=n;
+  $('verifyModal').classList.remove('hidden');
+  $('vm-name').value='';
+  $('vm-cccd').value='';
+  $('vm-major').value='';
+}
+async function submitVerify(){
+  const name = val('vm-name').toUpperCase();
+  const cccd = val('vm-cccd');
+  const major = val('vm-major');
+  
+  if(!name||!/^\d{12}$/.test(cccd)){alert('Nhập đúng Họ tên và CCCD 12 số');return;}
+  if(!major){alert('Vui lòng chọn ngành học!');return;}
+  
+  showLoad('Đang xác thực...');
+  try{
+    const d = await apiCall(URL_CHINH,{action:'getStudent',name,cccd,major});
+    hideLoad();
+    if(!d.success){
+      alert(d.message||'Xác thực thất bại');return;
+    }
+    session = {cccd, name:d.data.name, major:d.data.major};
+    saveSession(); updateUserBox();
+    $('verifyModal').classList.add('hidden');
+    showLoad('Đang tải...'); await refreshStudent(); hideLoad();
+    switchTab(pendingTab);
+  }catch(e){hideLoad();alert('Lỗi: '+e.message)}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOAD THEORY
+   ═══════════════════════════════════════════════════════════ */
+async function loadTheory(majorKey){
+  const major = window.NEWSTAR_MAJORS.find(m => m.name === majorKey);
+  if(!major){
+    const majorAlt = window.NEWSTAR_MAJORS.find(m => m.id === majorKey);
+    if(!majorAlt) throw new Error('Không tìm thấy ngành: '+majorKey);
+    return loadTheory(majorAlt.name);
+  }
+  const folder = major.folder;
+  if(theoryCache[folder]) return theoryCache[folder];
+  await new Promise((resolve,reject)=>{
+    if(window.NEWSTAR_DATA && window.NEWSTAR_DATA[folder] && window.NEWSTAR_DATA[folder].theory){resolve();return;}
+    const s = document.createElement('script');
+    s.src = 'data/'+folder+'/theory.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Không tải được '+folder+'/theory.js'));
+    document.head.appendChild(s);
+  });
+  const text = window.NEWSTAR_DATA[folder].theory;
+  const parts = text.split(/(?=Câu \d+:)/).filter(x => x.trim().startsWith('Câu'));
+  theoryCache[folder] = parts.map(c => c.trim());
+  return theoryCache[folder];
+}
+
+function parseQuestion(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const q = [], opts = [];
+  let ans = '', exp = '', mode = '';
+  for(const line of lines){
+    if(/^Câu \d+:/.test(line)){ 
+      q.push(line.replace(/^Câu \d+:\s*/, '')); 
+      continue; 
+    }
+    if(/^[A-D]\./.test(line)){ opts.push(line); continue; }
+    if(line.startsWith('Đáp án:')){ ans = line.replace('Đáp án:','').trim(); mode='ans'; continue; }
+    if(line.startsWith('Giải thích:')){ mode='exp'; continue; }
+    if(mode==='exp') exp += line+' ';
+    else if(mode==='ans' && !exp) exp += line+' ';
+    else if(opts.length===0) q.push(line);
+  }
+  return { q: q.join(' ').replace(/^[\d\.\s]+/,'').trim(), opts, ans, exp: exp.trim() };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 1: ĐĂNG KÝ / ĐĂNG NHẬP
+   ═══════════════════════════════════════════════════════════ */
+function renderMajorOptions(){
+  const sels = [$('t1-major'), $('vm-major')];
+  sels.forEach(sel => {
+    if(!sel) return;
+    sel.innerHTML = '<option value="">— Chọn ngành —</option>';
+    window.NEWSTAR_MAJORS.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.name;
+      opt.textContent = m.name + (m.enabled ? '' : ' (Sắp mở)');
+      if(!m.enabled) opt.disabled = true;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function attachUppercaseName(){
+  const els = [$('t1-name'), $('vm-name')];
+  els.forEach(el => {
+    if(!el) return;
+    el.addEventListener('input', function(){
+      const pos = this.selectionStart;
+      const upper = this.value.toUpperCase();
+      if(upper !== this.value){
+        this.value = upper;
+        try { this.setSelectionRange(pos, pos); } catch(e){}
+      }
+    });
+  });
+}
+
+async function submitReg(){
+  const name = val('t1-name').toUpperCase();
+  const cccd = val('t1-cccd');
+  const major = val('t1-major');
+  
+  if(!name){ alert('Vui lòng nhập Họ và tên (IN HOA)'); return; }
+  if(!/^\d{12}$/.test(cccd)){ alert('CCCD phải đúng 12 số'); return; }
+  if(!major){ alert('Vui lòng chọn Ngành học!'); return; }
+
+  showLoad('Đang kiểm tra thông tin...');
+  try {
+    const loginRes = await apiCall(URL_CHINH, { action: 'getStudent', name, cccd, major });
+    hideLoad();
+
+    if (loginRes.success) {
+      session = { cccd, name: loginRes.data.name, major: loginRes.data.major };
+      saveSession(); updateUserBox();
+      await refreshStudent();
+      $('t1-banner').className = 'banner success';
+      $('t1-banner').innerHTML = '✅ Đăng nhập thành công!<br>👤 <b>' + loginRes.data.name + '</b> — Ngành: <b>' + loginRes.data.major + '</b><br>Bạn có thể vào <b>Tab Ôn Thi</b>.';
+      $('t1-banner').classList.remove('hidden');
+      alert('Đăng nhập thành công!\nBạn có thể bấm Tab "Ôn Thi" để bắt đầu.');
+      return;
+    }
+
+    if (loginRes.message && loginRes.message.includes('Họ tên không khớp')) {
+      alert('❌ Họ tên không khớp với CCCD này. Vui lòng kiểm tra lại chữ IN HOA và dấu!');
+      return;
+    }
+
+    const dob = val('t1-dob');
+    const email = val('t1-email');
+    const phone = val('t1-phone');
+    const experience = document.querySelector('input[name="exp"]:checked')?.value || '';
+    const address = val('t1-address');
+    const contactPhone = val('t1-contact-phone');
+    const consent = $('t1-consent').checked;
+
+    if (!dob || !email || !phone || !experience || !address || !contactPhone) {
+      alert(`⚠️ Bạn CHƯA ĐĂNG KÝ ngành "${major}" hoặc thông tin chưa chính xác.\n\n→ Nếu muốn đăng ký mới ngành này: Vui lòng điền đầy đủ các trường còn lại (Ngày sinh, Email, SĐT...).\n→ Nếu đã có tài khoản: Hãy kiểm tra lại Họ tên, CCCD và chọn đúng ngành đã đăng ký.`);
+      return;
+    }
+    
+    if (!consent) { alert('Vui lòng tick vào ô cam đoan thông tin'); return; }
+    if (!/^(0[35789])\d{8}$/.test(phone)) { alert('SĐT không hợp lệ (VD: 0912345678)'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Email không hợp lệ'); return; }
+    if (!/^(0[35789])\d{8}$/.test(contactPhone)) { alert('SĐT liên hệ không hợp lệ'); return; }
+
+    showLoad('Đang tiến hành đăng ký mới...');
+    const regRes = await apiCall(URL_CHINH, {
+      action: 'register', name, dob, cccd, email, phone, experience, major, address, contactPhone, consent: 'Có'
+    });
+    hideLoad();
+
+    if (!regRes.success) {
+      alert(regRes.message || 'Lỗi đăng ký');
+      return;
+    }
+
+    session = { cccd, name, major };
+    saveSession(); updateUserBox();
+    await refreshStudent();
+    
+    $('t1-banner').className = 'banner success';
+    $('t1-banner').innerHTML = '✅ ' + regRes.message + '<br>Bạn có thể vào <b>Tab Ôn Thi</b> để bắt đầu.';
+    $('t1-banner').classList.remove('hidden');
+    alert(regRes.message + '\n\nBạn có thể bấm Tab "Ôn Thi" để bắt đầu.');
+
+  } catch (e) {
+    hideLoad();
+    alert('Lỗi mạng: ' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 2: ÔN THI
+   ═══════════════════════════════════════════════════════════ */
+const t2 = (()=>{
+  let chosenLesson = 0, currentStep = 0, lessonData = [], isSpeaking = false;
+  let speed = 1.2, startTime = 0, timerInt = null;
+  let idleWarn = null, idleKick = null, isEndOfLesson = false;
+  let viVoice = null, voiceRetry = 0;
+  let stream = null, recog = null;
+  let initDone = false;
+
+  function loadVoices(){
+    if(!('speechSynthesis' in window))return;
+    const voices = window.speechSynthesis.getVoices();
+    const vi = voices.filter(v => v.lang && v.lang.toLowerCase().includes('vi'));
+    if(vi.length>0){
+      const malePattern = /(nam\s*minh|male|nam\s*vietnam)/i;
+      const nonMale = vi.filter(v => !malePattern.test(v.name));
+      viVoice = nonMale.find(v => /female|nữ|linh|hoai|mai/i.test(v.name)) || nonMale[0] || vi[0];
+    } else if(voiceRetry++ < 20){
+      setTimeout(loadVoices, 300);
+    }
+  }
+  if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged = loadVoices;}
+
+  async function startCam(){
+    if(stream) return;
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+      $('t2-video').srcObject = stream;
+      $('t2-cam').classList.remove('hidden');
+    }catch(e){ console.error('Lỗi cam', e); }
+  }
+  function stopCam(){
+    if(stream){
+      try { stream.getTracks().forEach(t=>t.stop()); } catch(e){}
+      stream = null;
+    }
+    $('t2-cam').classList.add('hidden');
+    $('t2-video').srcObject = null;
+  }
+
+  async function init(){
+    if(!initDone){
+      if(!recog && (window.SpeechRecognition || window.webkitSpeechRecognition)){
+        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recog = new R(); recog.lang = 'vi-VN';
+        recog.onstart = () => {
+          $('t2-mic').innerText='🎙️ Đang ghi...';
+          $('t2-mic').style.background='#4cd137';
+          if($('t2-next')) $('t2-next').disabled = true; 
+        };
+        recog.onend = () => {
+          $('t2-mic').innerText='🎤 Hỏi lại';
+          $('t2-mic').style.background='#e84118';
+          if($('t2-next') && $('t2-next').style.display !== 'none') $('t2-next').disabled = false; 
+        };
+        recog.onresult = (e) => {
+          const q = e.results[0][0].transcript;
+          $('t2-status').innerText = '👤 Bạn hỏi: '+q;
+          const cur = lessonData[currentStep-1];
+          askCoze(`[HỌC VIÊN HỎI] Bài học: "${cur}". Câu hỏi: "${q}". Đóng vai cô Mai, giải thích ngắn gọn dễ hiểu.`);
+        };
+      }
+      initDone = true;
+    }
+    updateLessonButtons();
+    renderLockInfo();
+
+    // ĐÃ XÓA LỆNH TỰ ĐỘNG BẬT CAMERA TẠI ĐÂY
+    // Camera sẽ chỉ bật khi bấm "Bắt đầu học" hoặc "Qua bài tiếp"
+    if (currentStep === 0) {
+      stopCam();
+    }
+  }
+
+  function updateLessonButtons(){
+    if(!student)return;
+    const now = Date.now();
+    const btns = document.querySelectorAll('#t2-lessons button');
+    
+    btns[0].disabled = !!student.lesson1Time;
+    btns[0].innerText = student.lesson1Time ? 'Buổi 1 (Đã học)' : 'Buổi 1';
+    
+    let canLearn2 = false;
+    if (student.lesson1Time && !student.lesson2Time) {
+      canLearn2 = now >= getUnlockTime(student.lesson1Time, CONFIG.lockLessonDays);
+    }
+    btns[1].disabled = !canLearn2;
+    if (student.lesson2Time) btns[1].innerText = 'Buổi 2 (Đã học)';
+    else if (!student.lesson1Time) btns[1].innerText = 'Buổi 2 🔒';
+    else if (!canLearn2) btns[1].innerText = 'Buổi 2 ⏳';
+    else btns[1].innerText = 'Buổi 2';
+    
+    let canLearn3 = false;
+    if (student.lesson2Time && !student.lesson3Time) {
+      canLearn3 = now >= getUnlockTime(student.lesson2Time, CONFIG.lockLessonDays);
+    }
+    btns[2].disabled = !canLearn3;
+    if (student.lesson3Time) btns[2].innerText = 'Buổi 3 (Đã học)';
+    else if (!student.lesson2Time) btns[2].innerText = 'Buổi 3 🔒';
+    else if (!canLearn3) btns[2].innerText = 'Buổi 3 ⏳';
+    else btns[2].innerText = 'Buổi 3';
+  }
+
+  function renderLockInfo(){
+    if(t2LockInt){ clearInterval(t2LockInt); t2LockInt = null; }
+    const box = $('t2-lock-info');
+    if(!box) return;
+    if(!student){ box.innerHTML = ''; return; }
+
+    let html = '';
+    if(student.lesson1Time){
+      html += '<div class="banner success">✅ <b>Buổi 1</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson1Time)+'</b></div>';
+    }
+    if(student.lesson2Time){
+      html += '<div class="banner success">✅ <b>Buổi 2</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson2Time)+'</b></div>';
+    }
+
+    const now = Date.now();
+    
+    if (student.lesson1Time && !student.lesson2Time) {
+      const unlockT = getUnlockTime(student.lesson1Time, CONFIG.lockLessonDays);
+      if (now < unlockT) {
+        html += `<div class="lock-box">
+          <div class="lock-title">⏳ BUỔI 2 SẼ MỞ KHÓA VÀO NGÀY</div>
+          <div class="lock-date">${new Date(unlockT).toLocaleDateString('vi-VN')}</div>
+          <div class="lock-remain-label">Thời gian còn lại:</div>
+          <div class="lock-remain-val" id="t2-cd-b2">...</div>
+        </div>`;
+        t2LockInt = setInterval(()=>{
+          const el = $('t2-cd-b2');
+          if(!el){ clearInterval(t2LockInt); t2LockInt = null; return; }
+          const remain = unlockT - Date.now();
+          if(remain <= 0){
+            el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
+            clearInterval(t2LockInt); t2LockInt = null;
+            refreshStudent().then(()=>{ if(currentTab===2) t2.init(); });
+          } else {
+            el.innerText = formatRemain(remain);
+          }
+        }, 1000);
+      }
+    }
+
+    if (student.lesson2Time && !student.lesson3Time) {
+      const unlockT = getUnlockTime(student.lesson2Time, CONFIG.lockLessonDays);
+      if (now < unlockT) {
+        html += `<div class="lock-box">
+          <div class="lock-title">⏳ BUỔI 3 SẼ MỞ KHÓA VÀO NGÀY</div>
+          <div class="lock-date">${new Date(unlockT).toLocaleDateString('vi-VN')}</div>
+          <div class="lock-remain-label">Thời gian còn lại:</div>
+          <div class="lock-remain-val" id="t2-cd-b3">...</div>
+        </div>`;
+        if(t2LockInt) clearInterval(t2LockInt);
+        t2LockInt = setInterval(()=>{
+          const el = $('t2-cd-b3');
+          if(!el){ clearInterval(t2LockInt); t2LockInt = null; return; }
+          const remain = unlockT - Date.now();
+          if(remain <= 0){
+            el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
+            clearInterval(t2LockInt); t2LockInt = null;
+            refreshStudent().then(()=>{ if(currentTab===2) t2.init(); });
+          } else {
+            el.innerText = formatRemain(remain);
+          }
+        }, 1000);
+      }
+    }
+
+    if(student.lesson3Time){
+      const unlockT3 = getUnlockTime(student.lesson3Time, CONFIG.lockTab3Days);
+      if(now < unlockT3){
+        html += `<div class="lock-box">
+          <div class="lock-title">⏳ BÀI THI LÝ THUYẾT (TAB 3) SẼ MỞ KHÓA VÀO NGÀY</div>
+          <div class="lock-date">${new Date(unlockT3).toLocaleDateString('vi-VN')}</div>
+          <div class="lock-remain-label">Thời gian còn lại:</div>
+          <div class="lock-remain-val" id="t2-cd-t3">...</div>
+        </div>`;
+        if(t2LockInt) clearInterval(t2LockInt);
+        t2LockInt = setInterval(()=>{
+          const el = $('t2-cd-t3');
+          if(!el){ clearInterval(t2LockInt); t2LockInt = null; return; }
+          const remain = unlockT3 - Date.now();
+          if(remain <= 0){
+            el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
+            const tab3Btn = document.querySelector('#tabs [data-tab="3"]');
+            if(tab3Btn) tab3Btn.disabled = false;
+            clearInterval(t2LockInt); t2LockInt = null;
+          } else {
+            el.innerText = formatRemain(remain);
+          }
+        }, 1000);
+      } else {
+         html += '<div class="banner success" style="border-left-color:#27ae60">✅ <b>Đã mở khóa Tab 3 (Thi Lý Thuyết)!</b> Bạn có thể chuyển sang làm bài.</div>';
+      }
+    }
+    box.innerHTML = html;
+  }
+
+  async function selectLesson(n){
+    showLoad('Đang tải bài học...');
+    try{
+      const all = await loadTheory(session.major);
+      const per = Math.ceil(all.length / CONFIG.lessons);
+      const s = (n-1)*per;
+      const e = n===CONFIG.lessons ? all.length : s+per;
+      lessonData = all.slice(s, e);
+      chosenLesson = n;
+      currentStep = 0;
+      $('t2-lessons').style.display = 'none';
+      $('t2-speed').classList.add('show');
+      $('t2-class').classList.add('show');
+      $('t2-lecture').style.display = 'inline-block';
+      $('t2-next').style.display = 'none';
+      $('t2-checkout').style.display = 'none';
+      $('t2-checkout').classList.remove('active');
+      hideLoad();
+      startIdleTimer();
+      speakWait('Chào '+session.name+', cô là Mai. Chào mừng em đến với Buổi '+n+'. Bấm nút Bắt đầu học để vào bài nhé.');
+    }catch(e){hideLoad();alert('Lỗi: '+e.message)}
+  }
+
+  function startIdleTimer(){
+    clearTimeout(idleWarn); clearTimeout(idleKick);
+    idleWarn = setTimeout(()=>{
+      speakWait(isEndOfLesson?'Em đã học xong, hãy bấm Kết thúc để ghi nhận kết quả.':'Em ơi, em có đang học không? Bấm Qua bài tiếp theo nếu đã hiểu.', true);
+    }, 5*60*1000);
+  }
+  function startKickTimer(){
+    clearTimeout(idleWarn); clearTimeout(idleKick);
+    idleKick = setTimeout(()=>{alert('Không tương tác quá lâu. Lớp học đã kết thúc.');window.location.reload()}, 3*60*1000);
+  }
+  function stopIdle(){clearTimeout(idleWarn);clearTimeout(idleKick);}
+
+  async function speakWait(text, isWarn=false){
+    return new Promise(async resolve => {
+      if(!('speechSynthesis' in window)){resolve();return;}
+      if(!viVoice){
+        loadVoices();
+        if(!viVoice){
+          const voices = speechSynthesis.getVoices();
+          if(voices.length > 0) viVoice = voices.find(v => v.lang && v.lang.startsWith('vi')) || voices[0];
+        }
+      }
+      stopIdle();
+      speechSynthesis.cancel();
+      isSpeaking = true;
+      $('t2-avatar').classList.add('speaking');
+      $('t2-status').innerText = isWarn ? '⚠️ Cô Mai đang nhắc nhở...' : '🗣️ Cô Mai đang giảng...';
+      if(!startTime){startTime = Date.now(); startTimer();}
+      const clean = preprocessSpeech(text);
+      const chunks = splitText(clean, 150);
+      for(const c of chunks){
+        if(!isSpeaking)break;
+        await speakOne(c);
+        await sleep(120);
+      }
+      isSpeaking = false;
+      $('t2-avatar').classList.remove('speaking');
+      if(isWarn){
+        $('t2-status').innerText = '⚠️ Bấm Qua bài tiếp theo nếu đã hiểu.';
+        startKickTimer();
+      } else {
+        $('t2-status').innerText = isEndOfLesson?'✅ Đã hoàn thành. Bấm Kết thúc!':'✅ Xong. Chọn hành động tiếp theo.';
+        startIdleTimer();
+      }
+      resolve();
+    });
+  }
+
+  function speakOne(text){
+    return new Promise(resolve => {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'vi-VN';
+      if(viVoice) u.voice = viVoice;
+      u.rate = speed; u.pitch = 1.0;
+      const to = setTimeout(resolve, 15000 + text.length * 200);
+      u.onend = ()=>{clearTimeout(to);resolve()};
+      u.onerror = ()=>{clearTimeout(to);resolve()};
+      speechSynthesis.speak(u);
+    });
+  }
+
+  function splitText(t, max){
+    const init = t.match(/[^.?!,\n]+[.?!,\n]*/g) || [t];
+    const out = [];
+    init.forEach(ch => {
+      if(ch.length>max){
+        let cur='';
+        ch.split(' ').forEach(w=>{
+          if((cur+w).length<max) cur+=w+' ';
+          else {if(cur.trim())out.push(cur.trim());cur=w+' '}
+        });
+        if(cur.trim())out.push(cur.trim());
+      } else if(ch.trim()) out.push(ch.trim());
+    });
+    return out;
+  }
+
+  function startTimer(){
+    if(timerInt)clearInterval(timerInt);
+    timerInt = setInterval(()=>{
+      const s = Math.floor((Date.now()-startTime)/1000);
+      $('t2-timer').innerText = '⏱ '+fmtTime(s);
+    },1000);
+  }
+
+  function speedUp(){if(speed<1.5){speed=Math.round((speed+0.1)*10)/10;$('t2-speed-disp').innerText=speed.toFixed(1)+'x'}}
+  function speedDown(){if(speed>1.0){speed=Math.round((speed-0.1)*10)/10;$('t2-speed-disp').innerText=speed.toFixed(1)+'x'}}
+
+  async function lecture(){
+    $('t2-lecture').style.display = 'none';
+    $('t2-next').style.display = 'inline-block';
+    currentStep = 1;
+    if(!stream) await startCam();
+    await requestStep();
+  }
+
+  async function next(){
+    if(isSpeaking)return;
+    stopIdle();
+    speechSynthesis.cancel();
+    currentStep++;
+    if(!stream && student && !student.lesson3Time) await startCam();
+    await requestStep();
+  }
+
+  async function requestStep(){
+    const content = lessonData[currentStep-1];
+    if(content){
+      isEndOfLesson = false;
+      $('t2-status').innerText = `📖 Buổi ${chosenLesson} - Câu ${currentStep}/${lessonData.length}`;
+      await askCoze(`[GIẢNG BÀI] Nội dung: "${content}". Đọc rõ câu hỏi, giải thích đáp án, tự nhiên. Kết thúc: "Em đã hiểu chưa? Bấm Qua bài tiếp theo hoặc bật Mic hỏi lại."`);
+    } else {
+      isEndOfLesson = true;
+      stopIdle();
+      $('t2-next').style.display = 'none';
+      $('t2-checkout').style.display = 'block';
+      $('t2-checkout').classList.add('active');
+      await speakWait('Tuyệt vời! Em đã học xong Buổi '+chosenLesson+'. Bấm Kết thúc Buổi học để ghi nhận kết quả.');
+    }
+  }
+
+  async function askCoze(q){
+    $('t2-status').innerText = '🧠 Cô Mai đang soạn...';
+    
+    const btnLec = $('t2-lecture');
+    const btnNxt = $('t2-next');
+    const btnMic = $('t2-mic');
+    
+    if(btnLec) btnLec.disabled = true;
+    if(btnNxt) btnNxt.disabled = true;
+    if(btnMic) btnMic.disabled = true;
+
+    try{
+      const r = await fetch(PROXY+'https://api.coze.com/open_api/v2/chat',{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+COZE_TOKEN,'Content-Type':'application/json'},
+        body:JSON.stringify({bot_id:COZE_BOT_ID,user:session.cccd,query:q,stream:false})
+      });
+      if(r.status===403){
+        alert('MẠNG TRUNG GIAN BỊ KHÓA!\nBấm nút "Mở khóa Mạng" màu xám bên dưới, rồi bấm "Request temporary access".');
+        $('t2-unlock').style.display = 'block';
+        await speakWait('Đường truyền bị khóa, em mở khóa mạng nhé.');
+        return;
+      }
+      const d = await r.json();
+      if(d.code!==0){alert('Lỗi API: '+d.code+' - '+d.msg);return;}
+      let msg = null;
+      if(d.messages && Array.isArray(d.messages)) msg = d.messages.find(m=>m.role==='assistant'&&(m.type==='answer'||m.type==='text'));
+      if(!msg && d.data && Array.isArray(d.data)) msg = d.data.find(m=>m.role==='assistant'&&(m.type==='answer'||m.type==='text'));
+      if(msg && msg.content){await speakWait(msg.content.replace(/[*#]/g,'').trim());}
+      else{$('t2-status').innerText='❌ Không có phản hồi từ AI.';}
+    }catch(e){
+      $('t2-status').innerText = '❌ Lỗi: '+e.message;
+      await speakWait('Mạng lỗi, em kiểm tra kết nối nhé.');
+    } finally {
+      if(btnLec && btnLec.style.display !== 'none') btnLec.disabled = false;
+      if(btnNxt && btnNxt.style.display !== 'none') btnNxt.disabled = false;
+      if(btnMic) btnMic.disabled = false;
+    }
+  }
+
+  function mic(){
+    if(isSpeaking)return;
+    stopIdle();
+    if(recog){try{recog.start()}catch(e){}}
+    else alert('Trình duyệt không hỗ trợ Micro. Dùng Chrome/Edge.');
+  }
+
+  function unlock(){
+    window.open('https://cors-anywhere.herokuapp.com/corsdemo','_blank');
+    $('t2-unlock').style.display = 'none';
+  }
+
+  async function checkout(){
+    if(!$('t2-checkout').classList.contains('active'))return;
+    stopIdle();
+    showLoad('Đang ghi nhận...');
+    try{
+      const d = await apiCall(URL_CHINH,{action:'completeLesson',cccd:session.cccd,major:session.major,lesson:chosenLesson});
+      if(!d.success){hideLoad();alert(d.message||'Lỗi');return;}
+      await refreshStudent();
+      updateLessonButtons();
+      hideLoad();
+      alert(`✅ Đã hoàn thành Buổi ${chosenLesson}!\nKết quả đã ghi vào hệ thống.`);
+      
+      if(student && student.lesson3Time) stopCam();
+      
+      window.location.reload();
+    }catch(e){hideLoad();alert('Lỗi: '+e.message)}
+  }
+
+  return {init, selectLesson, lecture, next, mic, unlock, checkout, speedUp, speedDown, stopCam};
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 3: THI LÝ THUYẾT
+   ═══════════════════════════════════════════════════════════ */
+const t3 = (()=>{
+  let questions = [], answers = [], current = 0, startTime = 0, timerInt = null;
+  let stream = null, started = false, submitted = false;
+  let theoryPool = [];
+  let resultCountdownInt = null;
+
+  async function init(){
+    if(t3WelcomeInt){ clearInterval(t3WelcomeInt); t3WelcomeInt = null; }
+    
+    if(student && student.examStatus === 'Đạt'){
+      const examTime = student.examTime ? new Date(student.examTime) : null;
+      const unlockTime = examTime ? getUnlockTime(student.examTime, CONFIG.lockTab4Days) : 0;
+      const now = Date.now();
+
+      let html = '<div class="banner success">✅ Bạn đã <b>ĐẠT</b> bài thi lý thuyết với <b>'+student.examScore+'/30</b> câu đúng. Không thể thi lại.<br>';
+      if(examTime){
+        html += '📅 <b>Ngày thi ĐẠT:</b> '+examTime.toLocaleString('vi-VN')+'<br>';
+        if(now < unlockTime){
+          const unlockDateStr = new Date(unlockTime).toLocaleDateString('vi-VN');
+          html += '🔓 <b>Tab 4 (Thi Thực Hành)</b> sẽ mở khóa vào ngày:<br>';
+          html += '<b style="color:#f1c40f;font-size:18px">'+unlockDateStr+'</b>';
+          html += '<div class="lock-box" style="margin-top:10px"><div class="lock-remain-label">Thời gian còn lại:</div><div class="lock-remain-val" id="t3-welcome-cd">...</div></div>';
+        } else {
+          html += '✅ <b style="color:#27ae60">Đã mở khóa Tab 4 (Thi Thực Hành)!</b> Bạn có thể chuyển sang làm bài.';
+        }
+      }
+      html += '</div>';
+      $('t3-welcome').innerHTML = html;
+
+      if(examTime && now < unlockTime){
+        t3WelcomeInt = setInterval(()=>{
+          const el = $('t3-welcome-cd');
+          if(!el){ clearInterval(t3WelcomeInt); t3WelcomeInt = null; return; }
+          const remain = unlockTime - Date.now();
+          if(remain <= 0){
+            el.innerText = 'Đã mở khóa!';
+            el.style.color = '#27ae60';
+            const tab4Btn = document.querySelector('#tabs [data-tab="4"]');
+            if(tab4Btn) tab4Btn.disabled = false;
+            clearInterval(t3WelcomeInt); t3WelcomeInt = null;
+            t3.init();
+          } else {
+            el.innerText = formatRemain(remain);
+          }
+        }, 1000);
+      }
+      return;
+    }
+
+    if(student){
+      const now = Date.now();
+      
+      if (student.examStatus === 'Không đạt' && student.examTime) {
+        const unlockRetake = getUnlockTime(student.examTime, CONFIG.lockRetakeExamDays);
+        if (now < unlockRetake) {
+          let html = `<div class="lock-box">
+            <div class="lock-title">⏳ BẠN ĐÃ THI TRƯỢT. BÀI THI LẠI MỞ KHÓA VÀO NGÀY</div>
+            <div class="lock-date">${new Date(unlockRetake).toLocaleDateString('vi-VN')}</div>
+            <div class="lock-remain-label">Thời gian còn lại:</div>
+            <div class="lock-remain-val" id="t3-retake-cd">...</div>
+          </div>`;
+          $('t3-welcome').innerHTML = html;
+          
+          t3WelcomeInt = setInterval(()=>{
+            const el = $('t3-retake-cd');
+            if(!el){ clearInterval(t3WelcomeInt); t3WelcomeInt = null; return; }
+            const remain = unlockRetake - Date.now();
+            if(remain <= 0){
+              el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
+              const tab3Btn = document.querySelector('#tabs [data-tab="3"]');
+              if(tab3Btn) tab3Btn.disabled = false;
+              clearInterval(t3WelcomeInt); t3WelcomeInt = null;
+              t3.init();
+            } else {
+              el.innerText = formatRemain(remain);
+            }
+          }, 1000);
+          return;
+        }
+      }
+
+      const canOpen = student.lesson3Time && now >= getUnlockTime(student.lesson3Time, CONFIG.lockTab3Days);
+      if(!canOpen && student.examStatus !== 'Không đạt'){
+        if (!student.lesson3Time) {
+          $('t3-welcome').innerHTML = '<div class="banner warn">⏳ Chưa mở khóa. Cần hoàn thành Buổi 3 trước.</div>';
+          return;
+        }
+        
+        const unlockTime = getUnlockTime(student.lesson3Time, CONFIG.lockTab3Days);
+        const unlockDateStr = new Date(unlockTime).toLocaleDateString('vi-VN');
+        
+        let html = '<div class="lock-box">'
+             +  '<div class="lock-title">⏳ BÀI THI LÝ THUYẾT (TAB 3) SẼ MỞ KHÓA VÀO NGÀY</div>'
+             +  '<div class="lock-date">' + unlockDateStr + '</div>'
+             +  '<div class="lock-remain-label">Thời gian còn lại:</div>'
+             +  '<div class="lock-remain-val" id="t3-lock-cd">...</div>'
+             +  '</div>';
+        $('t3-welcome').innerHTML = html;
+        
+        if(t3WelcomeInt) clearInterval(t3WelcomeInt);
+        t3WelcomeInt = setInterval(()=>{
+          const el = $('t3-lock-cd');
+          if(!el){ clearInterval(t3WelcomeInt); t3WelcomeInt = null; return; }
+          const remain = unlockTime - Date.now();
+          if(remain <= 0){
+            el.innerText = 'Đã mở khóa!';
+            el.style.color = '#27ae60';
+            const tab3Btn = document.querySelector('#tabs [data-tab="3"]');
+            if(tab3Btn) tab3Btn.disabled = false;
+            clearInterval(t3WelcomeInt); t3WelcomeInt = null;
+            t3.init(); 
+          } else {
+            el.innerText = formatRemain(remain);
+          }
+        }, 1000);
+        return;
+      }
+    }
+
+    let btnText = (student && student.examStatus === 'Không đạt') ? '🚀 Thi Lại' : '🚀 Bắt Đầu Làm Bài';
+    $('t3-welcome').innerHTML = `<div class="banner"><b>📝 Bài Thi Lý Thuyết</b><br>30 câu / 45 phút. Đạt ≥25/30. Bắt buộc bật camera. <b>Nếu đã Đạt, không được thi lại.</b></div><button class="btn-main" onclick="t3.start()">${btnText}</button>`;
+    $('t3-welcome').classList.remove('hidden');
+    $('t3-running').classList.add('hidden');
+    $('t3-result').classList.add('hidden');
+  }
+
+  async function start(){
+    showLoad('Đang chuẩn bị...');
+    try{
+      theoryPool = await loadTheory(session.major);
+      stream = await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+      $('t3-video').srcObject = stream;
+      $('t3-cam').classList.remove('hidden');
+    }catch(e){hideLoad();alert('Cần bật camera để thi! '+e.message);return;}
+    
+    const pool = [...theoryPool];
+    questions = [];
+    for(let i=0;i<CONFIG.examQuestions && pool.length>0;i++){
+      const idx = Math.floor(Math.random()*pool.length);
+      questions.push(pool.splice(idx,1)[0]);
+    }
+    answers = new Array(questions.length).fill(-1);
+    current = 0; started = true; submitted = false;
+    $('t3-welcome').classList.add('hidden');
+    $('t3-running').classList.remove('hidden');
+    buildGrid();
+    renderQ();
+    startTimer();
+    hideLoad();
+  }
+
+  function startTimer(){
+    startTime = Date.now();
+    timerInt = setInterval(()=>{
+      const elapsed = Math.floor((Date.now()-startTime)/1000);
+      const remain = CONFIG.examDuration - elapsed;
+      if(remain<=0){clearInterval(timerInt);autoSubmit();return;}
+      const t = $('t3-timer');
+      t.innerText = '⏱ '+fmtTime(remain);
+      t.classList.toggle('warn', remain<=300);
+    },1000);
+  }
+
+  function buildGrid(){
+    const g = $('t3-grid'); g.innerHTML='';
+    questions.forEach((_,i)=>{
+      const c = document.createElement('div');
+      c.className = 't3-cell'; c.innerText = i+1;
+      c.onclick = ()=>{current=i;renderQ()};
+      g.appendChild(c);
+    });
+  }
+
+  function renderQ(){
+    const p = parseQuestion(questions[current]);
+    $('t3-qn').innerText = current+1;
+    $('t3-qt').innerText = p.q;
+    const cnt = answers.filter(a=>a>=0).length;
+    $('t3-ans-cnt').innerText = 'Đã trả lời: '+cnt+'/'+questions.length;
+    $('t3-prog-bar').style.width = (cnt/questions.length*100)+'%';
+    const opts = $('t3-opts'); opts.innerHTML='';
+    p.opts.forEach((o,i)=>{
+      const d = document.createElement('div');
+      d.className = 't3-opt'+(answers[current]===i?' sel':'');
+      const letter = String.fromCharCode(65+i);
+      const optText = o.replace(/^[A-D]\.\s*/,'');
+      d.innerHTML = '<span class="lt">'+letter+'</span><span>'+optText+'</span>';
+      d.onclick = ()=>{answers[current]=i;renderQ()};
+      opts.appendChild(d);
+    });
+    document.querySelectorAll('.t3-cell').forEach((c,i)=>{
+      c.classList.toggle('answered', answers[i]>=0);
+      c.classList.toggle('current', i===current);
+    });
+    $('t3-prev').disabled = current===0;
+    $('t3-next').disabled = current===questions.length-1;
+    $('t3-submit').disabled = answers.some(a=>a<0);
+  }
+
+  function prev(){if(current>0){current--;renderQ()}}
+  function next(){if(current<questions.length-1){current++;renderQ()}}
+  function autoSubmit(){alert('Hết giờ! Bài thi được nộp tự động.');submit(true);}
+
+  async function submit(skipConfirm){
+    if(submitted)return;
+    if(!skipConfirm && !confirm('Nộp bài? Bạn không thể sửa sau khi nộp.'))return;
+    submitted = true;
+    clearInterval(timerInt);
+    let correct = 0;
+    const details = [];
+    questions.forEach((q,i)=>{
+      const p = parseQuestion(q);
+      const expected = p.ans.trim().charAt(0).toUpperCase();
+      const given = answers[i]>=0 ? String.fromCharCode(65+answers[i]) : '';
+      const ok = given===expected;
+      if(ok)correct++;
+      details.push({i, given, expected, ok, p});
+    });
+    showLoad('Đang nộp bài...');
+    try{
+      const d = await apiCall(URL_CHINH,{action:'submitExam',cccd:session.cccd,major:session.major,score:correct,correct:correct});
+      if(!d.success){hideLoad();alert(d.message||'Lỗi');return;}
+      hideLoad();
+      await refreshStudent();
+      renderResult(correct, details);
+    }catch(e){hideLoad();alert('Lỗi: '+e.message)}
+  }
+
+  function renderResult(score, details){
+    $('t3-running').classList.add('hidden');
+    $('t3-result').classList.remove('hidden');
+    const pass = score>=CONFIG.passThreshold;
+    const st = $('t3-status');
+    st.className = 't3-status '+(pass?'pass':'fail');
+    st.innerText = pass?'ĐẠT':'KHÔNG ĐẠT';
+    $('t3-score-num').innerText = score;
+
+    if(pass){
+      let examTimeObj = null;
+      if(student && student.examTime){
+        examTimeObj = new Date(student.examTime);
+      } else {
+        examTimeObj = new Date();
+      }
+      const unlockTime = getUnlockTime(examTimeObj.toISOString(), CONFIG.lockTab4Days);
+      const unlockDateStr = new Date(unlockTime).toLocaleDateString('vi-VN');
+      const now = Date.now();
+
+      let msgHtml = '🎉 Chúc mừng! Bạn đã đạt bài thi lý thuyết.<br>';
+      msgHtml += '📅 <b>Ngày thi ĐẠT:</b> '+examTimeObj.toLocaleString('vi-VN')+'<br>';
+
+      if(now < unlockTime){
+        msgHtml += '🔓 <b>Tab 4 (Thi Thực Hành)</b> sẽ mở khóa vào ngày:<br>';
+        msgHtml += '<b style="color:#f1c40f;font-size:18px">'+unlockDateStr+'</b>';
+        msgHtml += '<div class="lock-box" style="margin-top:10px"><div class="lock-remain-label">Thời gian còn lại:</div><div class="lock-remain-val" id="t3-result-cd">...</div></div>';
+      } else {
+        msgHtml += '✅ <b style="color:#27ae60">Đã mở khóa Tab 4 (Thi Thực Hành)!</b>';
+      }
+      $('t3-msg').innerHTML = msgHtml;
+
+      if(now < unlockTime){
+        if(resultCountdownInt) clearInterval(resultCountdownInt);
+        resultCountdownInt = setInterval(()=>{
+          const el = $('t3-result-cd');
+          if(!el){ clearInterval(resultCountdownInt); resultCountdownInt = null; return; }
+          const remain = unlockTime - Date.now();
+          if(remain <= 0){
+            el.innerText = 'Đã mở khóa!';
+            el.style.color = '#27ae60';
+            const tab4Btn = document.querySelector('#tabs [data-tab="4"]');
+            if(tab4Btn) tab4Btn.disabled = false;
+            clearInterval(resultCountdownInt); resultCountdownInt = null;
+          } else {
+            el.innerText = formatRemain(remain);
+          }
+        }, 1000);
+      }
+    } else {
+      $('t3-msg').innerHTML = 'Rớt. Bạn có thể thi lại vào ngày mai (sau 00:00).';
+    }
+
+    const rev = $('t3-review'); rev.innerHTML='';
+    details.forEach((d,idx)=>{
+      const p = d.p;
+      const div = document.createElement('div');
+      div.className = 't3-review-item '+(d.ok?'c':'w');
+      const optLine = p.opts.map((o,j)=>{
+        const l = String.fromCharCode(65+j);
+        return '<span class="'+(l===d.expected?'c':'')+'">'+o+'</span>';
+      }).join('<br>');
+      div.innerHTML = '<div class="t3-rq">Câu '+(idx+1)+': '+p.q+'</div>'+
+        '<div class="t3-ra">'+optLine+'</div>'+
+        '<div class="t3-ra"><span class="'+(d.ok?'c':'w')+'">Bạn chọn: '+(d.given||'(chưa chọn)')+'</span> · Đáp án: <span class="c">'+d.expected+'</span></div>'+
+        '<div class="t3-re"><b>Giải thích:</b> '+p.exp+'</div>';
+      rev.appendChild(div);
+    });
+    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+    $('t3-cam').classList.add('hidden');
+  }
+
+  return {init, start, prev, next, submit};
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 4: THI THỰC HÀNH (UPLOAD FILE)
+   ═══════════════════════════════════════════════════════════ */
+const t4 = (()=>{
+  let currentStep = 1;
+  let viVoice2 = null;
+
+  if('speechSynthesis' in window){
+    const loadV = ()=>{
+      const vs = speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.toLowerCase().includes('vi'));
+      if(vs.length>0){
+        const male = /(nam\s*minh|male)/i;
+        viVoice2 = vs.filter(v=>!male.test(v.name))[0] || vs[0];
+      }
+    };
+    loadV(); speechSynthesis.onvoiceschanged = loadV;
+  }
+
+  function init(){
+    if(!student) return;
+
+    if(student.examStatus !== 'Đạt'){
+      $('t4-content').innerHTML = '<div class="t4-locked"><div class="ic">🔒</div><h2>Chưa đủ điều kiện</h2><p>Cần đạt bài thi lý thuyết (≥25/30) trước.</p><p>Điểm hiện tại: <b>'+student.examScore+'/30</b></p></div>';
+      return;
+    }
+
+    if(!student.examTime){
+      $('t4-content').innerHTML = '<div class="t4-locked"><div class="ic">⏳</div><h2>Chưa có mốc thời gian</h2><p>Vui lòng liên hệ Hotline 0879383389.</p></div>';
+      return;
+    }
+
+    const unlockTime = getUnlockTime(student.examTime, CONFIG.lockTab4Days);
+    const now = Date.now();
+    
+    if(student.practicalTime){
+      let statusHtml = '';
+      let statusColor = '#f39c12';
+      let statusIcon = '⏳';
+      
+      if(student.practicalStatus === 'Đạt') {
+        statusColor = '#27ae60';
+        statusIcon = '✅';
+        statusHtml = 'ĐẠT';
+      } else if (student.practicalStatus === 'Không đạt') {
+        statusColor = '#e74c3c';
+        statusIcon = '❌';
+        statusHtml = 'KHÔNG ĐẠT';
+      } else {
+        statusHtml = 'ĐANG CHẤM BÀI';
+      }
+
+      $('t4-content').innerHTML = `
+        <div class="card" style="text-align:center; padding: 30px;">
+          <div style="font-size: 60px; margin-bottom: 10px;">${statusIcon}</div>
+          <h2 style="color:${statusColor}; margin-top:0;">KẾT QUẢ THI THỰC HÀNH</h2>
+          <p style="font-size:16px; color:#ccc;">Trạng thái: <b style="color:${statusColor}; font-size:18px;">${statusHtml}</b></p>
+          <p style="color:#aaa; margin-top: 15px;">Ngày nộp bài: ${new Date(student.practicalTime).toLocaleString('vi-VN')}</p>
+          <div style="margin-top: 20px; padding: 15px; background: #0a3d52; border-radius: 8px; border-left:4px solid #00a8ff; text-align:left;">
+            <h3 style="color:#00a8ff; margin:0 0 10px 0; font-size:15px;">📚 Kết quả Lý Thuyết</h3>
+            <p style="margin:0; color:#fff;">Điểm: <b>${student.examScore}/30</b> — Đánh giá: <b style="color:#27ae60;">ĐẠT</b></p>
+            <p style="margin:5px 0 0 0; font-size:12px; color:#aaa;">Ngày thi: ${new Date(student.examTime).toLocaleString('vi-VN')}</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if(now < unlockTime){
+      const unlockDateStr = new Date(unlockTime).toLocaleDateString('vi-VN');
+      $('t4-content').innerHTML = `
+        <div class="t4-locked">
+          <div class="ic">⏳</div>
+          <h2>Chưa đến ngày thi thực hành</h2>
+          <p>Bạn đã đạt lý thuyết với <b>${student.examScore}/30</b> điểm.</p>
+          <div class="lock-box" style="max-width:440px; margin:16px auto 0">
+            <div class="lock-title">BÀI THI THỰC HÀNH (TAB 4) MỞ KHÓA VÀO NGÀY</div>
+            <div class="lock-date">${unlockDateStr}</div>
+            <div class="lock-remain-label">Thời gian còn lại:</div>
+            <div class="lock-remain-val">${formatRemain(unlockTime - now)}</div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    renderWelcome();
+  }
+
+  function renderWelcome(){
+    currentStep = 1;
+    $('t4-content').innerHTML = `
+      <div class="banner success"><b>🎬 Bài Thi Thực Hành</b><br>Bạn đã đạt Lý thuyết với <b>${student.examScore}/30</b> điểm.<br>Vui lòng quay video bằng điện thoại và tải lên theo 3 bước. <b style="color:#f39c12">Lưu ý: Video phải được quay trong ngày hôm nay.</b></div>
+      
+      <div class="t4-stepbar">
+        <div class="t4-step active" id="t4-s1">1 · CCCD</div>
+        <div class="t4-step" id="t4-s2">2 · Dụng cụ</div>
+        <div class="t4-step" id="t4-s3">3 · Thực hành</div>
+      </div>
+      
+      <div id="t4-step-1" class="t4-instr">
+        <h3>Bước 1 · Xác minh thông tin cá nhân</h3>
+        <p>Quay video rõ mặt, tay cầm CCCD trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau CCCD.</p>
+        <div class="warn">⏱ Video dài tối đa 1 phút.</div>
+        <p style="margin-top:10px; color:#4cd137; font-weight:bold;">Sau khi quay xong bạn chọn file vừa quay để up video bước 1 lên</p>
+        <input type="file" id="file-1" accept="video/*" style="display:none" onchange="t4.handleFile(event, 1)">
+        <button class="btn-main" style="margin-top:10px" onclick="document.getElementById('file-1').click()">📁 Chọn Video Bước 1</button>
+      </div>
+      
+      <div id="t4-step-2" class="t4-instr hidden">
+        <h3>Bước 2 · Xác minh dụng cụ thực hành</h3>
+        <p>Quay video thấy mặt tay giơ từng dụng cụ và nói tên dụng cụ.</p>
+        <div class="warn">⏱ Video dài tối đa 1 phút.</div>
+        <p style="margin-top:10px; color:#4cd137; font-weight:bold;">Sau khi quay xong bạn chọn file vừa quay để up video bước 2 lên</p>
+        <input type="file" id="file-2" accept="video/*" style="display:none" onchange="t4.handleFile(event, 2)">
+        <button class="btn-main" style="margin-top:10px" onclick="document.getElementById('file-2').click()">📁 Chọn Video Bước 2</button>
+      </div>
+      
+      <div id="t4-step-3" class="t4-instr hidden">
+        <h3>Bước 3 · Thực hành</h3>
+        <p>Quay video quá trình thao tác thực hành.</p>
+        <div class="warn">⏱ Video dài tối đa 5 phút.</div>
+        <p style="margin-top:10px; color:#4cd137; font-weight:bold;">Sau khi quay xong bạn chọn file vừa quay để up video bước 3 lên</p>
+        <input type="file" id="file-3" accept="video/*" style="display:none" onchange="t4.handleFile(event, 3)">
+        <button class="btn-main" style="margin-top:10px" onclick="document.getElementById('file-3').click()">📁 Chọn Video Bước 3</button>
+      </div>
+
+      <div id="t4-upblock" style="display:none; margin-top: 20px;">
+        <div class="t4-upbar"><div id="t4-upfill"></div></div>
+        <div class="t4-upmsg" id="t4-upmsg">Đang tải lên...</div>
+      </div>
+    `;
+    speak('Chào mừng '+session.name+' đến với bài thi thực hành. Hãy quay video và tải lên lần lượt 3 bước. Bắt đầu với Bước 1. Quay video rõ mặt, tay cầm căn cước công dân trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau căn cước công dân. Video dài tối đa 1 phút. Sau khi quay xong, bạn chọn file vừa quay để up video bước 1 lên.');
+  }
+
+  async function handleFile(event, stepId) {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    const lastMod = new Date(file.lastModified);
+    const today = new Date();
+    
+    if (lastMod.getDate() !== today.getDate() || 
+        lastMod.getMonth() !== today.getMonth() || 
+        lastMod.getFullYear() !== today.getFullYear()) {
+      alert('⚠️ LỖI: Video bạn chọn không phải được quay trong ngày hôm nay.\n\nVui lòng quay lại video mới để đảm bảo tính công bằng của kỳ thi!');
+      event.target.value = '';
+      return;
+    }
+
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    const dateStr = `${day}${month}${year}`;
+    
+    const nameSafe = sanitizeName(session.name);
+    const fileName = session.cccd + '_' + nameSafe + '_' + dateStr + '_Buoc' + stepId;
+
+    $('t4-upblock').style.display = 'block';
+    const fill = $('t4-upfill'), msg = $('t4-upmsg');
+    fill.style.width = '0%';
+    
+    const btn = document.querySelector(`#t4-step-${stepId} button`);
+    btn.disabled = true;
+    btn.innerText = '⏳ Đang xử lý...';
+
+    try {
+      await uploadChunks(file, fileName, stepId, (sent, total, text) => {
+        fill.style.width = (sent / total * 100) + '%';
+        msg.innerText = text;
+      });
+      
+      msg.innerText = '✅ Đã tải lên thành công!';
+      await sleep(800);
+      
+      if (stepId < 3) {
+        document.getElementById(`t4-step-${stepId}`).classList.add('hidden');
+        document.getElementById(`t4-s${stepId}`).classList.remove('active');
+        document.getElementById(`t4-s${stepId}`).classList.add('done');
+        
+        document.getElementById(`t4-step-${stepId+1}`).classList.remove('hidden');
+        document.getElementById(`t4-s${stepId+1}`).classList.add('active');
+        
+        $('t4-upblock').style.display = 'none';
+        event.target.value = '';
+
+        if (stepId === 1) {
+          speak('Đã hoàn thành bước 1. Chuyển sang bước 2. Quay video thấy mặt tay giơ từng dụng cụ và nói tên dụng cụ. Video dài tối đa 1 phút. Sau khi quay xong bạn chọn file vừa quay để up video bước 2 lên.');
+        } else if (stepId === 2) {
+          speak('Đã hoàn thành bước 2. Chuyển sang bước 3. Quay video quá trình thao tác thực hành. Video dài tối đa 5 phút. Sau khi quay xong bạn chọn file vừa quay để up video bước 3 lên.');
+        }
+      } else {
+        await finishExam();
+      }
+    } catch(e) {
+      msg.innerHTML = '<span style="color:#e74c3c">❌ Lỗi: ' + e.message + '</span>';
+      btn.disabled = false;
+      btn.innerText = `📁 Chọn Video Bước ${stepId}`;
+    }
+  }
+
+  async function uploadChunks(blob, fileName, stepId, cb){
+    const CHUNK = 500 * 1024;
+    const total = Math.ceil(blob.size/CHUNK);
+    const labels = {1:'CCCD',2:'Dụng cụ',3:'Thực hành'};
+    
+    for(let i=0;i<total;i++){
+      cb(i, total, `Đang gửi ${labels[stepId]}: ${i+1}/${total}...`);
+      const part = blob.slice(i*CHUNK, Math.min((i+1)*CHUNK, blob.size));
+      const b64 = await blobToB64(part);
+      const payload = {
+        token: SECRET_VIDEO_TOKEN, action:'uploadChunk',
+        fileName, chunkIndex:i, totalChunks:total, stepId,
+        name:session.name, cccd:session.cccd, major:session.major,
+        chunkData: b64.split(',')[1]
+      };
+      
+      try{
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        
+        await fetch(URL_VIDEO,{
+            method:'POST',
+            mode:'no-cors',
+            headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body:JSON.stringify(payload),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        await sleep(800); 
+      }catch(e){
+        if (e.name === 'AbortError') throw new Error('Mạng quá chậm hoặc bị ngắt. Vui lòng thử lại!');
+        throw new Error('Lỗi mạng: '+e.message);
+      }
+    }
+    
+    await fetch(URL_VIDEO,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:SECRET_VIDEO_TOKEN,action:'finishChunk',fileName})});
+    await sleep(1500);
+    cb(total, total, '✅ Đã gửi xong');
+  }
+
+  function blobToB64(blob){
+    return new Promise((res,rej)=>{
+      const r = new FileReader();
+      r.onloadend = ()=>res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(blob);
+    });
+  }
+
+  async function finishExam(){
+    showLoad('Đang hoàn tất...');
+    try{
+      await fetch(URL_CHINH,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({
+        action:'finishPractical', cccd:session.cccd, major:session.major
+      })});
+    }catch(e){}
+    
+    await refreshStudent();
+    hideLoad();
+    
+    $('t4-content').innerHTML = `<div class="t4-result"><div class="ic">🎉</div><h2>Cảm ơn ${session.name}!</h2><p>Bạn đã hoàn thành bài thi thực hành Newstar.<br>Toàn bộ video đã được gửi về Newstar.<br>Vui lòng chờ giáo viên chuyên môn chấm điểm.</p><button class="btn-main" style="max-width:280px;margin-top:20px" onclick="location.reload()">🔄 Đóng</button></div>`;
+    speak('Chúc mừng '+session.name+' đã hoàn thành bài thi thực hành. Trạng thái bài thi đang được chấm.');
+  }
+
+  function speak(text){
+    speechSynthesis.cancel();
+    if(!('speechSynthesis' in window)) return;
+    const clean = preprocessSpeech(text);
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = 'vi-VN';
+    if(viVoice2) u.voice = viVoice2;
+    u.rate=1.05;
+    speechSynthesis.speak(u);
+  }
+
+  return {init, handleFile};
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════ */
+renderMajorOptions();
+attachUppercaseName();
+loadSession();
+updateUserBox();
+
+makeDraggable($('t2-cam'));
+makeDraggable($('t3-cam'));
+
+if(session){
+  const nameEl = $('t1-name');
+  const cccdEl = $('t1-cccd');
+  const majorEl = $('t1-major');
+  if(nameEl) nameEl.value = (session.name||'').toUpperCase();
+  if(cccdEl) cccdEl.value = session.cccd || '';
+  if(majorEl) majorEl.value = session.major || '';
+
+  $('t1-banner').className = 'banner success';
+  $('t1-banner').innerHTML = '👤 Đã đăng nhập: <b>'+(session.name||'')+'</b> — Ngành: <b>'+(session.major||'')+'</b><br>Bạn có thể vào các <b>menu trên cùng để ôn tập và thi sát hạch theo lộ trình</b>.';
+  $('t1-banner').classList.remove('hidden');
+
+  refreshStudent().then(()=>{
+    switchTab(2);
+  });
+}
+</script>
+</body>
+</html>
