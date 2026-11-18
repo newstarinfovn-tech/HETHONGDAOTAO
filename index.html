@@ -274,11 +274,11 @@ button{font-family:inherit}
 </header>
 
 <nav id="tabs">
-  <button data-tab="1" class="active" onclick="switchTab(1)">📝 ĐĂNG KÝ / ĐĂNG NHẬP</button>
-  <button data-tab="0" onclick="switchTab(0)">📚 TÀI LIỆU ÔN THI</button>
-  <button data-tab="2" disabled onclick="switchTab(2)">📖 ÔN THI</button>
-  <button data-tab="3" disabled onclick="switchTab(3)">📝 THI LÝ THUYẾT</button>
-  <button data-tab="4" disabled onclick="switchTab(4)">💅 THI THỰC HÀNH</button>
+  <button data-tab="1" class="active" onclick="switchTab(1)">📝ĐĂNG KÝ/ĐĂNG NHẬP</button>
+  <button data-tab="0" onclick="switchTab(0)">📚TÀI LIỆU</button>
+  <button data-tab="2" disabled onclick="switchTab(2)">📖ÔN THI</button>
+  <button data-tab="3" disabled onclick="switchTab(3)">📝THI LÝ THUYẾT</button>
+  <button data-tab="4" disabled onclick="switchTab(4)">💅THI THỰC HÀNH</button>
 </nav>
 
 <!-- TAB 1 -->
@@ -298,13 +298,13 @@ button{font-family:inherit}
       <div class="form-row">
         <div class="field">
           <label>Họ và tên (CHỮ IN HOA CÓ DẤU) <span style="color:#e74c3c">*</span></label>
-          <input id="t1-name" placeholder="NGUYỄN HƯƠNG GIANG" required style="text-transform:uppercase">
+          <input id="t1-name" placeholder="PHẠM HÀ MY" required style="text-transform:uppercase">
         </div>
         <div class="field"><label>Ngày tháng năm sinh</label><input id="t1-dob" type="date"></div>
       </div>
       <div class="form-row">
         <div class="field"><label>Số CCCD (12 số) <span style="color:#e74c3c">*</span></label><input id="t1-cccd" inputmode="numeric" maxlength="12" pattern="[0-9]{12}" placeholder="012345678901" required></div>
-        <div class="field"><label>Email</label><input id="t1-email" type="email" placeholder="email@example.com"></div>
+        <div class="field"><label>Email (Cung cấp chính xác để nhận kết quả thi)</label><input id="t1-email" type="email" placeholder="email@example.com"></div>
       </div>
       <div class="form-row">
         <div class="field"><label>Điện thoại</label><input id="t1-phone" type="tel" pattern="(0[35789])[0-9]{8}" placeholder="09xxxxxxxx"></div>
@@ -322,7 +322,7 @@ button{font-family:inherit}
         </div>
       </div>
       <div class="form-row">
-        <div class="field"><label>Học tại cơ sở (địa chỉ)</label><input id="t1-address" placeholder="Số nhà, đường, quận/huyện..."></div>
+        <div class="field"><label>Học tại cơ sở (địa chỉ)</label><input id="t1-address" placeholder="Số nhà, đường, phường, TP..."></div>
         <div class="field"><label>SĐT liên hệ</label><input id="t1-contact-phone" type="tel" pattern="(0[35789])[0-9]{8}" placeholder="09xxxxxxxx"></div>
       </div>
       <div class="consent">
@@ -343,7 +343,7 @@ button{font-family:inherit}
             <img src="logo.jpg" alt="Newstar Logo" onerror="this.src='https://via.placeholder.com/150?text=Newstar'" class="logo">
             <div>
                 <h1>Hệ Thống Thư Viện Ôn Thi Trực Tuyến</h1>
-                <p><i class="fas fa-book-open text-[#d4af37]"></i> Danh Mục Tài Liệu Ôn Thi</p>
+                <p><i class="fas fa-book-open text-[#d4af37]"></i> Danh Mục Tài Liệu</p>
             </div>
         </div>
         <button id="btn-back-tl" class="hidden bg-[#d4af37] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#b8941f] transition-all shadow-lg flex items-center gap-2" onclick="tl_backToHome()">
@@ -358,7 +358,7 @@ button{font-family:inherit}
                 <i class="fas fa-graduation-cap"></i> THƯ VIỆN TÀI LIỆU
             </div>
             <h2 class="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-3 tracking-tight">HỆ THỐNG PHÂN TÍCH DỮ LIỆU TỰ ĐỘNG</h2>
-            <p class="text-slate-600 max-w-2xl mx-auto text-sm md:text-base">Nhấp vào môn học để xem và in toàn bộ câu hỏi trắc nghiệm chuyên sâu.</p>
+            <p class="text-slate-600 max-w-2xl mx-auto text-sm md:text-base">Nhấp vào môn học để xem hoặc in toàn bộ câu hỏi trắc nghiệm chuyên sâu.</p>
         </div>
         <div class="tl-search-wrap">
             <input type="text" id="tl-search-input" placeholder="Tìm kiếm môn học...">
@@ -408,9 +408,9 @@ button{font-family:inherit}
   </div>
   <div class="t2-ctrl">
     <div class="t2-lessons" id="t2-lessons">
-      <button data-lesson="1" onclick="t2.selectLesson(1)">Buổi 1</button>
-      <button data-lesson="2" onclick="t2.selectLesson(2)" disabled>Buổi 2 🔒</button>
-      <button data-lesson="3" onclick="t2.selectLesson(3)" disabled>Buổi 3 🔒</button>
+      <button data-lesson="1" onclick="t2.selectLesson(1)">BUỔI 1</button>
+      <button data-lesson="2" onclick="t2.selectLesson(2)" disabled>BUỔI 2 🔒</button>
+      <button data-lesson="3" onclick="t2.selectLesson(3)" disabled>BUỔI 3 🔒</button>
     </div>
     <div class="t2-speed" id="t2-speed"><span>Tốc độ: <span id="t2-speed-disp">1.2x</span></span><button onclick="t2.speedDown()">➖ Chậm</button><button onclick="t2.speedUp()">➕ Nhanh</button></div>
     <div class="t2-class" id="t2-class">
@@ -600,9 +600,11 @@ function initSpeechEngine(){
   if(!('speechSynthesis' in window)) return;
   speechEngineReady = true;
   try{
-    const warm = new SpeechSynthesisUtterance(' ');
-    warm.volume = 0;
-    warm.rate = 5;
+    // Trên iOS, cần khởi tạo và nói một câu thật ngắn (không phải âm thanh câm) để "mở khóa" kênh âm thanh
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const warm = new SpeechSynthesisUtterance(isIOS ? 'Xin chào' : ' ');
+    warm.volume = isIOS ? 0.01 : 0; // iOS cần âm lượng > 0
+    warm.rate = 1;
     warm.lang = 'vi-VN';
     speechSynthesis.speak(warm);
     speechSynthesis.getVoices();
@@ -1086,9 +1088,9 @@ const t2 = (()=>{
     $('t2-video').srcObject = null;
   }
 
-  async function init(){
+    async function init(){
     if(!initDone){
-      if(!recog && (window.SpeechRecognition || window.webkitSpeechRecognition)){
+            if(!recog && (window.SpeechRecognition || window.webkitSpeechRecognition)){
         const R = window.SpeechRecognition || window.webkitSpeechRecognition;
         recog = new R(); recog.lang = 'vi-VN';
         recog.onstart = () => {
@@ -1098,14 +1100,24 @@ const t2 = (()=>{
         };
         recog.onend = () => {
           $('t2-mic').innerText='🎤 Hỏi lại';
-          $('t2-mic').style.background='#e84118';
+          $('t2-mic').style.background='#ef4444';
           if($('t2-next') && $('t2-next').style.display !== 'none') $('t2-next').disabled = false; 
+        };
+        recog.onerror = (e) => {
+          console.error("Lỗi Mic:", e.error);
+          $('t2-mic').innerText='🎤 Hỏi lại';
+          $('t2-mic').style.background='#ef4444';
+          if(e.error === 'not-allowed') {
+            alert('Vui lòng cấp quyền Micro cho trình duyệt trong phần Cài đặt > Safari > Micro!');
+          } else if (e.error === 'network') {
+            alert('Lỗi mạng, không thể nhận diện giọng nói.');
+          }
         };
         recog.onresult = (e) => {
           const q = e.results[0][0].transcript;
           $('t2-status').innerText = '👤 Bạn hỏi: '+q;
           const cur = lessonData[currentStep-1];
-          askCoze(`[HỌC VIÊN HỎI] Bài học: "${cur}". Câu hỏi: "${q}". Đóng vai cô Mai, giải thích ngắn gọn dễ hiểu.`);
+          askCoze(`[HỌC VIÊN HỎI] Bài học: "${cur}". Câu hỏi: "${q}". Đóng vai cô giáo, giải thích ngắn gọn dễ hiểu.`);
         };
       }
       initDone = true;
@@ -1113,8 +1125,24 @@ const t2 = (()=>{
     updateLessonButtons();
     renderLockInfo();
 
-    // ĐÃ XÓA LỆNH TỰ ĐỘNG BẬT CAMERA TẠI ĐÂY
-    // Camera sẽ chỉ bật khi bấm "Bắt đầu học" hoặc "Qua bài tiếp"
+    // TỰ ĐỘNG ĐỔI ẢNH NGAY KHI VÀO TAB
+    if (student && session) {
+      const majorInfo = window.NEWSTAR_MAJORS.find(m => m.name === session.major);
+      let teacherName = 'Mai';
+      let avatarFile = 'my-chamsocda.jpg'; // Mặc định
+      if (majorInfo) {
+        if (majorInfo.teacher) teacherName = majorInfo.teacher;
+        if (majorInfo.avatar) avatarFile = majorInfo.avatar;
+      }
+      const avatarImg = $('t2-avatar');
+      if (avatarImg && avatarImg.src.indexOf(avatarFile) === -1) {
+        avatarImg.src = 'assets/' + avatarFile;
+        avatarImg.onerror = function() {
+          this.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 fill=%22%2300a8ff%22 font-size=%2230%22 text-anchor=%22middle%22%3E' + teacherName + '%3C/text%3E%3C/svg%3E';
+        };
+      }
+    }
+
     if (currentStep === 0) {
       stopCam();
     }
@@ -1244,7 +1272,7 @@ const t2 = (()=>{
     box.innerHTML = html;
   }
 
-  async function selectLesson(n){
+    async function selectLesson(n){
     showLoad('Đang tải bài học...');
     try{
       const all = await loadTheory(session.major);
@@ -1254,6 +1282,25 @@ const t2 = (()=>{
       lessonData = all.slice(s, e);
       chosenLesson = n;
       currentStep = 0;
+      
+      // LẤY THÔNG TIN GIÁO VIÊN
+      const majorInfo = window.NEWSTAR_MAJORS.find(m => m.name === session.major);
+      let teacherName = 'Mai';
+      let avatarFile = 'my-chamsocda.jpg';
+      if (majorInfo) {
+        if (majorInfo.teacher) teacherName = majorInfo.teacher;
+        if (majorInfo.avatar) avatarFile = majorInfo.avatar;
+      }
+
+      // CẬP NHẬT ẢNH
+      const avatarImg = $('t2-avatar');
+      if (avatarImg) {
+        avatarImg.src = 'assets/' + avatarFile;
+        avatarImg.onerror = function() {
+          this.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 fill=%22%2300a8ff%22 font-size=%2230%22 text-anchor=%22middle%22%3E' + teacherName + '%3C/text%3E%3C/svg%3E';
+        };
+      }
+
       $('t2-lessons').style.display = 'none';
       $('t2-speed').classList.add('show');
       $('t2-class').classList.add('show');
@@ -1263,14 +1310,16 @@ const t2 = (()=>{
       $('t2-checkout').classList.remove('active');
       hideLoad();
       startIdleTimer();
-      speakWait('Chào '+session.name+', cô là Mai. Chào mừng em đến với Buổi '+n+'. Bấm nút Bắt đầu học để vào bài nhé.');
+      
+      // LỜI CHÀO ĐỘNG THEO TÊN CÔ GIÁO
+      speakWait('Chào '+session.name+', cô tên là '+teacherName+'. Chào mừng em đến với Buổi '+n+'. Hãy bấm nút Bắt đầu học để vào bài nhé.');
     }catch(e){hideLoad();alert('Lỗi: '+e.message)}
   }
 
   function startIdleTimer(){
     clearTimeout(idleWarn); clearTimeout(idleKick);
     idleWarn = setTimeout(()=>{
-      speakWait(isEndOfLesson?'Em đã học xong, hãy bấm Kết thúc để ghi nhận kết quả.':'Em ơi, em có đang học không? Bấm Qua bài tiếp theo nếu đã hiểu.', true);
+      speakWait(isEndOfLesson?'Em đã học xong, hãy bấm Kết thúc để ghi nhận kết quả.':''+session.name+' ơi, em có đang học không? Bấm Qua bài tiếp theo nếu đã hiểu.', true);
     }, 5*60*1000);
   }
   function startKickTimer(){
@@ -1293,7 +1342,7 @@ const t2 = (()=>{
       speechSynthesis.cancel();
       isSpeaking = true;
       $('t2-avatar').classList.add('speaking');
-      $('t2-status').innerText = isWarn ? '⚠️ Cô Mai đang nhắc nhở...' : '🗣️ Cô Mai đang giảng...';
+      $('t2-status').innerText = isWarn ? '⚠️ Giảng viên đang nhắc nhở...' : '🗣️ Giảng viên đang giảng...';
       if(!startTime){startTime = Date.now(); startTimer();}
       const clean = preprocessSpeech(text);
       const chunks = splitText(clean, 150);
@@ -1384,12 +1433,12 @@ const t2 = (()=>{
       $('t2-next').style.display = 'none';
       $('t2-checkout').style.display = 'block';
       $('t2-checkout').classList.add('active');
-      await speakWait('Tuyệt vời! Em đã học xong Buổi '+chosenLesson+'. Bấm Kết thúc Buổi học để ghi nhận kết quả.');
+      await speakWait('Tuyệt vời! Em đã học xong Buổi '+chosenLesson+'. Bấm Kết thúc Buổi học để hệ thống ghi nhận kết quả.');
     }
   }
 
   async function askCoze(q){
-    $('t2-status').innerText = '🧠 Cô Mai đang soạn...';
+    $('t2-status').innerText = '🧠 Giảng viên đang soạn giáo án';
     
     const btnLec = $('t2-lecture');
     const btnNxt = $('t2-next');
@@ -1428,11 +1477,36 @@ const t2 = (()=>{
     }
   }
 
-  function mic(){
-    if(isSpeaking)return;
+  async function mic(){
+    if(isSpeaking) return;
     stopIdle();
-    if(recog){try{recog.start()}catch(e){}}
-    else alert('Trình duyệt không hỗ trợ Micro. Dùng Chrome/Edge.');
+    
+    if(!recog) {
+      alert('Trình duyệt của bạn không hỗ trợ nhận diện giọng nói. Hãy dùng Safari trên iOS hoặc Chrome trên Android.');
+      return;
+    }
+
+    // Trên iOS, cần đảm bảo đã xin quyền micro trước khi start
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Chỉ xin quyền nếu chưa có (để tránh hiện thông báo nhiều lần)
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Tắt stream ngay sau khi xin được quyền để nhường micro cho SpeechRecognition
+        stream.getTracks().forEach(track => track.stop()); 
+      }
+    } catch (err) {
+      alert('Bạn cần cấp quyền Micro cho trang web để sử dụng tính năng hỏi bài. Vui lòng vào Cài đặt > Safari > Micro và bật lên.');
+      return;
+    }
+
+    try {
+      recog.start();
+    } catch(e) {
+      console.error(e);
+      // Nếu đang chạy mà bấm lại, hoặc lỗi khác
+      $('t2-mic').innerText='🎤 Hỏi lại';
+      $('t2-mic').style.background='#ef4444';
+    }
   }
 
   function unlock(){
