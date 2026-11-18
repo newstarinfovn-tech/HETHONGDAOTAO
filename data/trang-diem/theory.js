@@ -29,7 +29,6 @@ D. Blush
 Đáp án: C. Primer
 Giải thích: Kem lót (Primer) tạo một lớp màng polymer sinh học lấp đầy vi rãnh thượng bì và lỗ chân lông. Về mặt quang học, lớp màng này san phẳng bề mặt da, giảm hiện tượng tán xạ ánh sáng không đều (diffuse reflection), từ đó tăng cường độ bám dính cơ học cho các phân tử màu ở lớp kem nền tiếp theo và chống trôi do tuyến bã nhờn tiết ra.
 
-
 Câu 4:Trong nghệ thuật trang điểm, “cut crease” là kỹ thuật áp dụng cho vùng nào?
 A. Má
 B. Cằm
@@ -38,7 +37,7 @@ D. Trán
 Đáp án: C. Mắt
 Giải thích: Kỹ thuật “cut crease” tạo sự tương phản độ sáng (luminance contrast) cực cao giữa vùng bầu mắt và hốc mắt. Việc ngắt dải màu đột ngột tạo ranh giới quang học rõ rệt, kích thích tế bào hạch võng mạc nhận diện đường nét nhanh hơn, giúp khắc phục nhược điểm mí mắt sụp hoặc thiếu nếp mí sâu dưới ánh đèn chụp hình chuyên nghiệp.
 
-Câu 5:Để hiệu chỉnh làn da sạm màu, nên dùng loại kem hiệu chỉnh màu nào?
+Câu 5: Để hiệu chỉnh làn da sạm màu, nên dùng loại kem hiệu chỉnh màu nào?
 A. Xanh lá
 B. Tím lavender
 C. Vàng
