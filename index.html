@@ -274,7 +274,7 @@ button{font-family:inherit}
 </header>
 
 <nav id="tabs">
-  <button data-tab="1" class="active" onclick="switchTab(1)">📝ĐĂNG KÝ/ĐĂNG NHẬP</button>
+  <button data-tab="1" class="active" onclick="switchTab(1)">📝ĐĂNG KÝ</button>
   <button data-tab="0" onclick="switchTab(0)">📚TÀI LIỆU</button>
   <button data-tab="2" disabled onclick="switchTab(2)">📖ÔN THI</button>
   <button data-tab="3" disabled onclick="switchTab(3)">📝THI LÝ THUYẾT</button>
@@ -288,11 +288,11 @@ button{font-family:inherit}
       <img src="logo newstar.png" alt="Logo Newstar" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #00a8ff; box-shadow:0 4px 15px rgba(0,168,255,0.4);" onerror="this.style.display='none'">
     </div>
     
-    <h2 style="text-align:center;">📝 Phiếu Đăng Ký / Đăng Nhập</h2>
+    <h2 style="text-align:center;">📝 PHIẾU ĐĂNG KÝ / ĐĂNG NHẬP</h2>
     <div id="t1-banner" class="banner hidden"></div>
-    <p style="color:#aaa;font-size:13px;margin:0 0 16px;line-height:1.5;text-align:center;">
-      <b>Đã có tài khoản?</b> Nhập <b>Họ tên (IN HOA)</b> + <b>Số CCCD</b> + <b>Chọn Ngành học</b>. Hệ thống sẽ tự động đăng nhập vào đúng ngành.<br>
-      <b>Chưa có tài khoản?</b> Điền đầy đủ tất cả thông tin để đăng ký mới.
+    <p style="color:#01013d;font-size:13px;margin:0 0 16px;line-height:1.5;text-align:center;">
+      <b>Bạn đã có tài khoản?</b> Nhập <b>Họ tên (IN HOA)</b> + <b>Số CCCD</b> + <b>Chọn Ngành học</b>. Hệ thống sẽ tự động đăng nhập vào đúng ngành.<br>
+      <b>Nếu chưa có tài khoản?</b> Điền đầy đủ tất cả thông tin bên dưới để đăng ký mới.
     </p>
     <form id="t1-form" onsubmit="event.preventDefault();submitReg();">
       <div class="form-row">
@@ -340,9 +340,9 @@ button{font-family:inherit}
     <!-- HEADER -->
     <header class="tl-header-gradient flex items-center justify-between flex-wrap gap-4">
         <div class="flex items-center gap-4">
-            <img src="logo.jpg" alt="Newstar Logo" onerror="this.src='https://via.placeholder.com/150?text=Newstar'" class="logo">
+            <img src="logothuvien.jpg" alt="Logo thu viện" onerror="this.src='https://via.placeholder.com/150?text=Newstar'" class="logo">
             <div>
-                <h1>Hệ Thống Thư Viện Ôn Thi Trực Tuyến</h1>
+                <h3>Hệ Thống Thư Viện Ôn Thi Trực Tuyến</h3>
                 <p><i class="fas fa-book-open text-[#d4af37]"></i> Danh Mục Tài Liệu</p>
             </div>
         </div>
@@ -403,7 +403,7 @@ button{font-family:inherit}
   <div id="t2-timer">⏱ 00:00</div>
   <div id="t2-cam" class="hidden"><video id="t2-video" autoplay playsinline muted></video><div class="lbl">Camera HV</div></div>
   <div class="t2-stage">
-    <img id="t2-avatar" class="t2-avatar" src="assets/avatar-co-mai.jpg" alt="Cô Mai" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 fill=%22%2300a8ff%22 font-size=%2230%22 text-anchor=%22middle%22%3ECô Mai%3C/text%3E%3C/svg%3E'">
+    <img id="t2-avatar" class="t2-avatar" src="assets/comai-vp.jpg" alt="Cô Mai" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 fill=%22%2300a8ff%22 font-size=%2230%22 text-anchor=%22middle%22%3ECô Mai%3C/text%3E%3C/svg%3E'">
     <div id="t2-status" class="t2-status">Xin chào!</div>
   </div>
   <div class="t2-ctrl">
@@ -1266,7 +1266,7 @@ const t2 = (()=>{
           }
         }, 1000);
       } else {
-         html += '<div class="banner success" style="border-left-color:#27ae60">✅ <b>Đã mở khóa Tab 3 (Thi Lý Thuyết)!</b> Bạn có thể chuyển sang làm bài.</div>';
+         html += '<div class="banner success" style="border-left-color:#27ae60">✅ <b>Đã mở khóa Tab 3 (Thi Lý Thuyết)!</b> Bạn có thể chuyển sang thi lý thuyết.</div>';
       }
     }
     box.innerHTML = html;
