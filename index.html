@@ -261,6 +261,29 @@ button{font-family:inherit}
     .no-print { display: none !important; }
     .tl-print-card { border: none !important; box-shadow: none !important; border-bottom: 1px solid #e2e8f0 !important; break-inside: avoid; margin-bottom: 1.5rem !important; padding-left: 0 !important; padding-right: 0 !important; }
 }
+
+/* CSS CHO POPUP CẢNH BÁO CAMERA */
+#camera-warning-overlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 9999;
+    display: none; justify-content: center; align-items: center; flex-direction: column;
+    color: white; text-align: center; padding: 20px;
+}
+#camera-warning-overlay.show { display: flex; }
+#camera-warning-overlay h2 { color: #ef4444; font-size: 22px; margin-bottom: 10px; font-weight: 800; }
+#camera-warning-timer { font-size: 60px; font-weight: 900; color: #f59e0b; margin: 15px 0; }
+/* CSS CHO TAB 4 UPLOAD */
+.t4-steps { display: flex; gap: 10px; margin-bottom: 20px; }
+.t4-step-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: #fff; font-weight: bold; color: var(--text-muted); text-align: center; font-size: 14px;}
+.t4-step-btn.active { background: #eff6ff; border-color: var(--brand-blue); color: var(--brand-blue); }
+.t4-step-btn.done { background: #f0fdf4; border-color: #22c55e; color: #166534; }
+.t4-box { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.t4-box h3 { color: var(--brand-blue); margin-top: 0; font-size: 18px; }
+.t4-box p { color: #475569; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+.btn-upload { background: var(--brand-blue-light); color: white; padding: 14px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; max-width: 400px; margin: 0 auto; display: block; transition: 0.2s;}
+.btn-upload:disabled { background: #cbd5e1; cursor: not-allowed; }
+.btn-upload.done { background: #22c55e; }
+.upload-progress { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 15px; overflow: hidden; display: none; }
+.upload-progress > div { height: 100%; background: var(--brand-blue-light); width: 0; transition: width 0.3s; }
 </style>
 </head>
 <body>
@@ -451,6 +474,14 @@ button{font-family:inherit}
 
 <!-- TAB 4 -->
 <main id="tab-4" class="pane hidden"><div id="t4-content"></div></main>
+
+<!-- POPUP CẢNH BÁO CAMERA -->
+<div id="camera-warning-overlay">
+  <h2>⚠️ MẤT KẾT NỐI CAMERA!</h2>
+  <p>Vui lòng bật lại Camera. Nếu quá thời gian, bài học/bài thi sẽ bị hủy.</p>
+  <div id="camera-warning-timer">120</div>
+  <button class="btn-main" style="max-width: 300px; margin-top: 20px;" onclick="location.reload()">🔄 Tải lại trang (Thử lại)</button>
+</div>
 
 <!-- Modals -->
 <div id="verifyModal" class="mo hidden">
@@ -1056,6 +1087,8 @@ const t2 = (()=>{
   let viVoice = null, voiceRetry = 0;
   let stream = null, recog = null;
   let initDone = false;
+  let camMonitorInt = null;
+  let isLearningActive = false;
 
   function loadVoices(){
     if(!('speechSynthesis' in window))return;
@@ -1077,9 +1110,13 @@ const t2 = (()=>{
       stream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
       $('t2-video').srcObject = stream;
       $('t2-cam').classList.remove('hidden');
-    }catch(e){ console.error('Lỗi cam', e); }
+      startCameraMonitor();
+    }catch(e){ console.error('Lỗi cam', e); alert('Vui lòng cấp quyền Camera để tiếp tục!'); }
   }
+  
   function stopCam(){
+    isLearningActive = false;
+    if(camMonitorInt) { clearInterval(camMonitorInt); camMonitorInt = null; }
     if(stream){
       try { stream.getTracks().forEach(t=>t.stop()); } catch(e){}
       stream = null;
@@ -1088,48 +1125,52 @@ const t2 = (()=>{
     $('t2-video').srcObject = null;
   }
 
-    async function init(){
-    if(!initDone){
-            if(!recog && (window.SpeechRecognition || window.webkitSpeechRecognition)){
-        const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recog = new R(); recog.lang = 'vi-VN';
-        recog.onstart = () => {
-          $('t2-mic').innerText='🎙️ Đang ghi...';
-          $('t2-mic').style.background='#4cd137';
-          if($('t2-next')) $('t2-next').disabled = true; 
-        };
-        recog.onend = () => {
-          $('t2-mic').innerText='🎤 Hỏi lại';
-          $('t2-mic').style.background='#ef4444';
-          if($('t2-next') && $('t2-next').style.display !== 'none') $('t2-next').disabled = false; 
-        };
-        recog.onerror = (e) => {
-          console.error("Lỗi Mic:", e.error);
-          $('t2-mic').innerText='🎤 Hỏi lại';
-          $('t2-mic').style.background='#ef4444';
-          if(e.error === 'not-allowed') {
-            alert('Vui lòng cấp quyền Micro cho trình duyệt trong phần Cài đặt > Safari > Micro!');
-          } else if (e.error === 'network') {
-            alert('Lỗi mạng, không thể nhận diện giọng nói.');
-          }
-        };
-        recog.onresult = (e) => {
-          const q = e.results[0][0].transcript;
-          $('t2-status').innerText = '👤 Bạn hỏi: '+q;
-          const cur = lessonData[currentStep-1];
-          askCoze(`[HỌC VIÊN HỎI] Bài học: "${cur}". Câu hỏi: "${q}". Đóng vai cô giáo, giải thích ngắn gọn dễ hiểu.`);
-        };
+  function startCameraMonitor() {
+    if(camMonitorInt) clearInterval(camMonitorInt);
+    camMonitorInt = setInterval(() => {
+      if(!isLearningActive || !stream) return;
+      const track = stream.getVideoTracks()[0];
+      if(!track || track.readyState !== 'live' || $('t2-video').paused || $('t2-video').readyState === 0) {
+        clearInterval(camMonitorInt);
+        showCameraWarning(() => {
+            isLearningActive = false;
+            stopIdle();
+            speechSynthesis.cancel();
+            alert('⏳ Đã quá 120s không có Camera. Buổi học đã bị hủy, bạn phải học lại từ đầu!');
+            currentStep = 0;
+            $('t2-checkout').style.display = 'none';
+            $('t2-lecture').style.display = 'inline-block';
+            $('t2-next').style.display = 'none';
+            $('t2-status').innerText = 'Đã hủy buổi học do mất Camera. Hãy bấm Bắt đầu học lại.';
+            stopCam();
+            unlockTabs();
+        });
       }
-      initDone = true;
+    }, 2000);
+  }
+
+  async function init(){
+    if(!initDone){
+        if(!recog && (window.SpeechRecognition || window.webkitSpeechRecognition)){
+            const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recog = new R(); recog.lang = 'vi-VN';
+            recog.onstart = () => { $('t2-mic').innerText='🎙️ Đang ghi...'; $('t2-mic').style.background='#4cd137'; };
+            recog.onend = () => { $('t2-mic').innerText='🎤 Hỏi lại'; $('t2-mic').style.background='#ef4444'; };
+            recog.onresult = (e) => {
+              const q = e.results[0][0].transcript;
+              $('t2-status').innerText = '👤 Bạn hỏi: '+q;
+              const cur = lessonData[currentStep-1];
+              askCoze(`[HỌC VIÊN HỎI] Bài học: "${cur}". Câu hỏi: "${q}". Đóng vai cô giáo, giải thích ngắn gọn dễ hiểu.`);
+            };
+        }
+        initDone = true;
     }
     updateLessonButtons();
     renderLockInfo();
 
-    // TỰ ĐỘNG ĐỔI ẢNH NGAY KHI VÀO TAB
     if (student && session) {
       const majorInfo = window.NEWSTAR_MAJORS.find(m => m.name === session.major);
-      let teacherName = 'Mai';
-      let avatarFile = 'my-chamsocda.jpg'; // Mặc định
+      let teacherName = 'Mai', avatarFile = 'my-chamsocda.jpg';
       if (majorInfo) {
         if (majorInfo.teacher) teacherName = majorInfo.teacher;
         if (majorInfo.avatar) avatarFile = majorInfo.avatar;
@@ -1137,14 +1178,8 @@ const t2 = (()=>{
       const avatarImg = $('t2-avatar');
       if (avatarImg && avatarImg.src.indexOf(avatarFile) === -1) {
         avatarImg.src = 'assets/' + avatarFile;
-        avatarImg.onerror = function() {
-          this.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 fill=%22%2300a8ff%22 font-size=%2230%22 text-anchor=%22middle%22%3E' + teacherName + '%3C/text%3E%3C/svg%3E';
-        };
+        avatarImg.onerror = function() { this.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 fill=%22%2300a8ff%22 font-size=%2230%22 text-anchor=%22middle%22%3E' + teacherName + '%3C/text%3E%3C/svg%3E'; };
       }
-    }
-
-    if (currentStep === 0) {
-      stopCam();
     }
   }
 
@@ -1152,154 +1187,49 @@ const t2 = (()=>{
     if(!student)return;
     const now = Date.now();
     const btns = document.querySelectorAll('#t2-lessons button');
-    
     btns[0].disabled = !!student.lesson1Time;
     btns[0].innerText = student.lesson1Time ? 'Buổi 1 (Đã học)' : 'Buổi 1';
-    
-    let canLearn2 = false;
-    if (student.lesson1Time && !student.lesson2Time) {
-      canLearn2 = now >= getUnlockTime(student.lesson1Time, CONFIG.lockLessonDays);
-    }
+    let canLearn2 = student.lesson1Time && !student.lesson2Time && (now >= getUnlockTime(student.lesson1Time, CONFIG.lockLessonDays));
     btns[1].disabled = !canLearn2;
-    if (student.lesson2Time) btns[1].innerText = 'Buổi 2 (Đã học)';
-    else if (!student.lesson1Time) btns[1].innerText = 'Buổi 2 🔒';
-    else if (!canLearn2) btns[1].innerText = 'Buổi 2 ⏳';
-    else btns[1].innerText = 'Buổi 2';
-    
-    let canLearn3 = false;
-    if (student.lesson2Time && !student.lesson3Time) {
-      canLearn3 = now >= getUnlockTime(student.lesson2Time, CONFIG.lockLessonDays);
-    }
+    btns[1].innerText = student.lesson2Time ? 'Buổi 2 (Đã học)' : (!canLearn2 ? 'Buổi 2 🔒' : 'Buổi 2');
+    let canLearn3 = student.lesson2Time && !student.lesson3Time && (now >= getUnlockTime(student.lesson2Time, CONFIG.lockLessonDays));
     btns[2].disabled = !canLearn3;
-    if (student.lesson3Time) btns[2].innerText = 'Buổi 3 (Đã học)';
-    else if (!student.lesson2Time) btns[2].innerText = 'Buổi 3 🔒';
-    else if (!canLearn3) btns[2].innerText = 'Buổi 3 ⏳';
-    else btns[2].innerText = 'Buổi 3';
+    btns[2].innerText = student.lesson3Time ? 'Buổi 3 (Đã học)' : (!canLearn3 ? 'Buổi 3 🔒' : 'Buổi 3');
   }
 
   function renderLockInfo(){
     if(t2LockInt){ clearInterval(t2LockInt); t2LockInt = null; }
     const box = $('t2-lock-info');
-    if(!box) return;
-    if(!student){ box.innerHTML = ''; return; }
-
+    if(!box || !student) return;
     let html = '';
-    if(student.lesson1Time){
-      html += '<div class="banner success">✅ <b>Buổi 1</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson1Time)+'</b></div>';
-    }
-    if(student.lesson2Time){
-      html += '<div class="banner success">✅ <b>Buổi 2</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson2Time)+'</b></div>';
-    }
-
+    if(student.lesson1Time) html += '<div class="banner success">✅ <b>Buổi 1</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson1Time)+'</b></div>';
+    if(student.lesson2Time) html += '<div class="banner success">✅ <b>Buổi 2</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson2Time)+'</b></div>';
     const now = Date.now();
-    
     if (student.lesson1Time && !student.lesson2Time) {
       const unlockT = getUnlockTime(student.lesson1Time, CONFIG.lockLessonDays);
-      if (now < unlockT) {
-        html += `<div class="lock-box">
-          <div class="lock-title">⏳ BUỔI 2 SẼ MỞ KHÓA VÀO NGÀY</div>
-          <div class="lock-date">${new Date(unlockT).toLocaleDateString('vi-VN')}</div>
-          <div class="lock-remain-label">Thời gian còn lại:</div>
-          <div class="lock-remain-val" id="t2-cd-b2">...</div>
-        </div>`;
-        t2LockInt = setInterval(()=>{
-          const el = $('t2-cd-b2');
-          if(!el){ clearInterval(t2LockInt); t2LockInt = null; return; }
-          const remain = unlockT - Date.now();
-          if(remain <= 0){
-            el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
-            clearInterval(t2LockInt); t2LockInt = null;
-            refreshStudent().then(()=>{ if(currentTab===2) t2.init(); });
-          } else {
-            el.innerText = formatRemain(remain);
-          }
-        }, 1000);
-      }
+      if (now < unlockT) html += `<div class="lock-box"><div class="lock-title">⏳ BUỔI 2 MỞ KHÓA VÀO NGÀY</div><div class="lock-date">${new Date(unlockT).toLocaleDateString('vi-VN')}</div></div>`;
     }
-
     if (student.lesson2Time && !student.lesson3Time) {
       const unlockT = getUnlockTime(student.lesson2Time, CONFIG.lockLessonDays);
-      if (now < unlockT) {
-        html += `<div class="lock-box">
-          <div class="lock-title">⏳ BUỔI 3 SẼ MỞ KHÓA VÀO NGÀY</div>
-          <div class="lock-date">${new Date(unlockT).toLocaleDateString('vi-VN')}</div>
-          <div class="lock-remain-label">Thời gian còn lại:</div>
-          <div class="lock-remain-val" id="t2-cd-b3">...</div>
-        </div>`;
-        if(t2LockInt) clearInterval(t2LockInt);
-        t2LockInt = setInterval(()=>{
-          const el = $('t2-cd-b3');
-          if(!el){ clearInterval(t2LockInt); t2LockInt = null; return; }
-          const remain = unlockT - Date.now();
-          if(remain <= 0){
-            el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
-            clearInterval(t2LockInt); t2LockInt = null;
-            refreshStudent().then(()=>{ if(currentTab===2) t2.init(); });
-          } else {
-            el.innerText = formatRemain(remain);
-          }
-        }, 1000);
-      }
-    }
-
-    if(student.lesson3Time){
-      const unlockT3 = getUnlockTime(student.lesson3Time, CONFIG.lockTab3Days);
-      if(now < unlockT3){
-        html += `<div class="lock-box">
-          <div class="lock-title">⏳ BÀI THI LÝ THUYẾT (TAB 3) SẼ MỞ KHÓA VÀO NGÀY</div>
-          <div class="lock-date">${new Date(unlockT3).toLocaleDateString('vi-VN')}</div>
-          <div class="lock-remain-label">Thời gian còn lại:</div>
-          <div class="lock-remain-val" id="t2-cd-t3">...</div>
-        </div>`;
-        if(t2LockInt) clearInterval(t2LockInt);
-        t2LockInt = setInterval(()=>{
-          const el = $('t2-cd-t3');
-          if(!el){ clearInterval(t2LockInt); t2LockInt = null; return; }
-          const remain = unlockT3 - Date.now();
-          if(remain <= 0){
-            el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
-            const tab3Btn = document.querySelector('#tabs [data-tab="3"]');
-            if(tab3Btn) tab3Btn.disabled = false;
-            clearInterval(t2LockInt); t2LockInt = null;
-          } else {
-            el.innerText = formatRemain(remain);
-          }
-        }, 1000);
-      } else {
-         html += '<div class="banner success" style="border-left-color:#27ae60">✅ <b>Đã mở khóa Tab 3 (Thi Lý Thuyết)!</b> Bạn có thể chuyển sang thi lý thuyết.</div>';
-      }
+      if (now < unlockT) html += `<div class="lock-box"><div class="lock-title">⏳ BUỔI 3 MỞ KHÓA VÀO NGÀY</div><div class="lock-date">${new Date(unlockT).toLocaleDateString('vi-VN')}</div></div>`;
     }
     box.innerHTML = html;
   }
 
-    async function selectLesson(n){
+  async function selectLesson(n){
     showLoad('Đang tải bài học...');
     try{
       const all = await loadTheory(session.major);
       const per = Math.ceil(all.length / CONFIG.lessons);
-      const s = (n-1)*per;
-      const e = n===CONFIG.lessons ? all.length : s+per;
+      const s = (n-1)*per, e = n===CONFIG.lessons ? all.length : s+per;
       lessonData = all.slice(s, e);
-      chosenLesson = n;
-      currentStep = 0;
+      chosenLesson = n; currentStep = 0;
       
-      // LẤY THÔNG TIN GIÁO VIÊN
       const majorInfo = window.NEWSTAR_MAJORS.find(m => m.name === session.major);
-      let teacherName = 'Mai';
-      let avatarFile = 'my-chamsocda.jpg';
-      if (majorInfo) {
-        if (majorInfo.teacher) teacherName = majorInfo.teacher;
-        if (majorInfo.avatar) avatarFile = majorInfo.avatar;
-      }
-
-      // CẬP NHẬT ẢNH
+      let teacherName = 'Mai', avatarFile = 'my-chamsocda.jpg';
+      if (majorInfo) { if (majorInfo.teacher) teacherName = majorInfo.teacher; if (majorInfo.avatar) avatarFile = majorInfo.avatar; }
       const avatarImg = $('t2-avatar');
-      if (avatarImg) {
-        avatarImg.src = 'assets/' + avatarFile;
-        avatarImg.onerror = function() {
-          this.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23333%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 fill=%22%2300a8ff%22 font-size=%2230%22 text-anchor=%22middle%22%3E' + teacherName + '%3C/text%3E%3C/svg%3E';
-        };
-      }
+      if (avatarImg) { avatarImg.src = 'assets/' + avatarFile; }
 
       $('t2-lessons').style.display = 'none';
       $('t2-speed').classList.add('show');
@@ -1307,20 +1237,14 @@ const t2 = (()=>{
       $('t2-lecture').style.display = 'inline-block';
       $('t2-next').style.display = 'none';
       $('t2-checkout').style.display = 'none';
-      $('t2-checkout').classList.remove('active');
       hideLoad();
-      startIdleTimer();
-      
-      // LỜI CHÀO ĐỘNG THEO TÊN CÔ GIÁO
       speakWait('Chào '+session.name+', cô tên là '+teacherName+'. Chào mừng em đến với Buổi '+n+'. Hãy bấm nút Bắt đầu học để vào bài nhé.');
     }catch(e){hideLoad();alert('Lỗi: '+e.message)}
   }
 
   function startIdleTimer(){
     clearTimeout(idleWarn); clearTimeout(idleKick);
-    idleWarn = setTimeout(()=>{
-      speakWait(isEndOfLesson?'Em đã học xong, hãy bấm Kết thúc để ghi nhận kết quả.':''+session.name+' ơi, em có đang học không? Bấm Qua bài tiếp theo nếu đã hiểu.', true);
-    }, 5*60*1000);
+    idleWarn = setTimeout(()=>{ speakWait(isEndOfLesson?'Em đã học xong, hãy bấm Kết thúc.':session.name+' ơi, em có đang học không?', true); }, 5*60*1000);
   }
   function startKickTimer(){
     clearTimeout(idleWarn); clearTimeout(idleKick);
@@ -1331,35 +1255,18 @@ const t2 = (()=>{
   async function speakWait(text, isWarn=false){
     return new Promise(async resolve => {
       if(!('speechSynthesis' in window)){resolve();return;}
-      if(!viVoice){
-        loadVoices();
-        if(!viVoice){
-          const voices = speechSynthesis.getVoices();
-          if(voices.length > 0) viVoice = voices.find(v => v.lang && v.lang.startsWith('vi')) || voices[0];
-        }
-      }
-      stopIdle();
-      speechSynthesis.cancel();
+      if(!viVoice){ loadVoices(); if(!viVoice){ const voices = speechSynthesis.getVoices(); if(voices.length > 0) viVoice = voices.find(v => v.lang && v.lang.startsWith('vi')) || voices[0]; } }
+      stopIdle(); speechSynthesis.cancel();
       isSpeaking = true;
       $('t2-avatar').classList.add('speaking');
-      $('t2-status').innerText = isWarn ? '⚠️ Giảng viên đang nhắc nhở...' : '🗣️ Giảng viên đang giảng...';
       if(!startTime){startTime = Date.now(); startTimer();}
       const clean = preprocessSpeech(text);
       const chunks = splitText(clean, 150);
-      for(const c of chunks){
-        if(!isSpeaking)break;
-        await speakOne(c);
-        await sleep(120);
-      }
+      for(const c of chunks){ if(!isSpeaking)break; await speakOne(c); await sleep(120); }
       isSpeaking = false;
       $('t2-avatar').classList.remove('speaking');
-      if(isWarn){
-        $('t2-status').innerText = '⚠️ Bấm Qua bài tiếp theo nếu đã hiểu.';
-        startKickTimer();
-      } else {
-        $('t2-status').innerText = isEndOfLesson?'✅ Đã hoàn thành. Bấm Kết thúc!':'✅ Xong. Chọn hành động tiếp theo.';
-        startIdleTimer();
-      }
+      if(isWarn){ $('t2-status').innerText = '⚠️ Bấm Qua bài tiếp theo nếu đã hiểu.'; startKickTimer(); }
+      else { $('t2-status').innerText = isEndOfLesson?'✅ Đã hoàn thành. Bấm Kết thúc!':'✅ Xong. Chọn hành động tiếp theo.'; startIdleTimer(); }
       resolve();
     });
   }
@@ -1367,12 +1274,10 @@ const t2 = (()=>{
   function speakOne(text){
     return new Promise(resolve => {
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'vi-VN';
-      if(viVoice) u.voice = viVoice;
+      u.lang = 'vi-VN'; if(viVoice) u.voice = viVoice;
       u.rate = speed; u.pitch = 1.0;
       const to = setTimeout(resolve, 15000 + text.length * 200);
-      u.onend = ()=>{clearTimeout(to);resolve()};
-      u.onerror = ()=>{clearTimeout(to);resolve()};
+      u.onend = ()=>{clearTimeout(to);resolve()}; u.onerror = ()=>{clearTimeout(to);resolve()};
       speechSynthesis.speak(u);
     });
   }
@@ -1381,24 +1286,15 @@ const t2 = (()=>{
     const init = t.match(/[^.?!,\n]+[.?!,\n]*/g) || [t];
     const out = [];
     init.forEach(ch => {
-      if(ch.length>max){
-        let cur='';
-        ch.split(' ').forEach(w=>{
-          if((cur+w).length<max) cur+=w+' ';
-          else {if(cur.trim())out.push(cur.trim());cur=w+' '}
-        });
-        if(cur.trim())out.push(cur.trim());
-      } else if(ch.trim()) out.push(ch.trim());
+      if(ch.length>max){ let cur=''; ch.split(' ').forEach(w=>{ if((cur+w).length<max) cur+=w+' '; else {if(cur.trim())out.push(cur.trim());cur=w+' '} }); if(cur.trim())out.push(cur.trim()); }
+      else if(ch.trim()) out.push(ch.trim());
     });
     return out;
   }
 
   function startTimer(){
     if(timerInt)clearInterval(timerInt);
-    timerInt = setInterval(()=>{
-      const s = Math.floor((Date.now()-startTime)/1000);
-      $('t2-timer').innerText = '⏱ '+fmtTime(s);
-    },1000);
+    timerInt = setInterval(()=>{ const s = Math.floor((Date.now()-startTime)/1000); $('t2-timer').innerText = '⏱ '+fmtTime(s); },1000);
   }
 
   function speedUp(){if(speed<1.5){speed=Math.round((speed+0.1)*10)/10;$('t2-speed-disp').innerText=speed.toFixed(1)+'x'}}
@@ -1408,16 +1304,16 @@ const t2 = (()=>{
     $('t2-lecture').style.display = 'none';
     $('t2-next').style.display = 'inline-block';
     currentStep = 1;
+    isLearningActive = true;
     if(!stream) await startCam();
+    lockTabs();
     await requestStep();
   }
 
   async function next(){
     if(isSpeaking)return;
-    stopIdle();
-    speechSynthesis.cancel();
+    stopIdle(); speechSynthesis.cancel();
     currentStep++;
-    if(!stream && student && !student.lesson3Time) await startCam();
     await requestStep();
   }
 
@@ -1426,7 +1322,7 @@ const t2 = (()=>{
     if(content){
       isEndOfLesson = false;
       $('t2-status').innerText = `📖 Buổi ${chosenLesson} - Câu ${currentStep}/${lessonData.length}`;
-      await askCoze(`[GIẢNG BÀI] Nội dung: "${content}". Đọc rõ câu hỏi, giải thích đáp án, tự nhiên. Kết thúc: "Em đã hiểu chưa? Bấm Qua bài tiếp theo hoặc bật Mic hỏi lại."`);
+      await askCoze(`[GIẢNG BÀI] Nội dung: "${content}". Đọc rõ câu hỏi, giải thích đáp án.`);
     } else {
       isEndOfLesson = true;
       stopIdle();
@@ -1439,95 +1335,48 @@ const t2 = (()=>{
 
   async function askCoze(q){
     $('t2-status').innerText = '🧠 Giảng viên đang soạn giáo án';
-    
-    const btnLec = $('t2-lecture');
-    const btnNxt = $('t2-next');
-    const btnMic = $('t2-mic');
-    
-    if(btnLec) btnLec.disabled = true;
-    if(btnNxt) btnNxt.disabled = true;
-    if(btnMic) btnMic.disabled = true;
-
+    const btnLec = $('t2-lecture'), btnNxt = $('t2-next'), btnMic = $('t2-mic');
+    if(btnLec) btnLec.disabled = true; if(btnNxt) btnNxt.disabled = true; if(btnMic) btnMic.disabled = true;
     try{
-      const r = await fetch(PROXY+'https://api.coze.com/open_api/v2/chat',{
-        method:'POST',
-        headers:{'Authorization':'Bearer '+COZE_TOKEN,'Content-Type':'application/json'},
-        body:JSON.stringify({bot_id:COZE_BOT_ID,user:session.cccd,query:q,stream:false})
-      });
-      if(r.status===403){
-        alert('MẠNG TRUNG GIAN BỊ KHÓA!\nBấm nút "Mở khóa Mạng" màu xám bên dưới, rồi bấm "Request temporary access".');
-        $('t2-unlock').style.display = 'block';
-        await speakWait('Đường truyền bị khóa, em mở khóa mạng nhé.');
-        return;
-      }
+      const r = await fetch(PROXY+'https://api.coze.com/open_api/v2/chat',{method:'POST',headers:{'Authorization':'Bearer '+COZE_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({bot_id:COZE_BOT_ID,user:session.cccd,query:q,stream:false})});
+      if(r.status===403){ alert('MẠNG BỊ KHÓA! Bấm "Mở khóa Mạng".'); $('t2-unlock').style.display = 'block'; await speakWait('Đường truyền bị khóa.'); return; }
       const d = await r.json();
-      if(d.code!==0){alert('Lỗi API: '+d.code+' - '+d.msg);return;}
       let msg = null;
       if(d.messages && Array.isArray(d.messages)) msg = d.messages.find(m=>m.role==='assistant'&&(m.type==='answer'||m.type==='text'));
-      if(!msg && d.data && Array.isArray(d.data)) msg = d.data.find(m=>m.role==='assistant'&&(m.type==='answer'||m.type==='text'));
-      if(msg && msg.content){await speakWait(msg.content.replace(/[*#]/g,'').trim());}
-      else{$('t2-status').innerText='❌ Không có phản hồi từ AI.';}
-    }catch(e){
-      $('t2-status').innerText = '❌ Lỗi: '+e.message;
-      await speakWait('Mạng lỗi, em kiểm tra kết nối nhé.');
-    } finally {
-      if(btnLec && btnLec.style.display !== 'none') btnLec.disabled = false;
-      if(btnNxt && btnNxt.style.display !== 'none') btnNxt.disabled = false;
-      if(btnMic) btnMic.disabled = false;
-    }
+      if(msg && msg.content){ await speakWait(msg.content.replace(/[*#]/g,'').trim()); }
+    }catch(e){ await speakWait('Mạng lỗi, em kiểm tra kết nối nhé.'); } 
+    finally { if(btnLec && btnLec.style.display !== 'none') btnLec.disabled = false; if(btnNxt && btnNxt.style.display !== 'none') btnNxt.disabled = false; if(btnMic) btnMic.disabled = false; }
   }
 
   async function mic(){
-    if(isSpeaking) return;
+    if(isSpeaking || !recog) return;
     stopIdle();
-    
-    if(!recog) {
-      alert('Trình duyệt của bạn không hỗ trợ nhận diện giọng nói. Hãy dùng Safari trên iOS hoặc Chrome trên Android.');
-      return;
-    }
-
-    // Trên iOS, cần đảm bảo đã xin quyền micro trước khi start
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // Chỉ xin quyền nếu chưa có (để tránh hiện thông báo nhiều lần)
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Tắt stream ngay sau khi xin được quyền để nhường micro cho SpeechRecognition
-        stream.getTracks().forEach(track => track.stop()); 
-      }
-    } catch (err) {
-      alert('Bạn cần cấp quyền Micro cho trang web để sử dụng tính năng hỏi bài. Vui lòng vào Cài đặt > Safari > Micro và bật lên.');
-      return;
-    }
-
-    try {
-      recog.start();
-    } catch(e) {
-      console.error(e);
-      // Nếu đang chạy mà bấm lại, hoặc lỗi khác
-      $('t2-mic').innerText='🎤 Hỏi lại';
-      $('t2-mic').style.background='#ef4444';
-    }
+    try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(t => t.stop()); } catch (err) { alert('Cần cấp quyền Micro!'); return; }
+    try { recog.start(); } catch(e) {}
   }
 
-  function unlock(){
-    window.open('https://cors-anywhere.herokuapp.com/corsdemo','_blank');
-    $('t2-unlock').style.display = 'none';
-  }
+  function unlock(){ window.open('https://cors-anywhere.herokuapp.com/corsdemo','_blank'); $('t2-unlock').style.display = 'none'; }
 
   async function checkout(){
     if(!$('t2-checkout').classList.contains('active'))return;
     stopIdle();
+    
+    showLoad('Đang xử lý hình ảnh...');
+    const base64 = captureFrameAsBase64('t2-video');
+    if(base64) {
+        const fileName = session.cccd + '_' + sanitizeName(session.name) + '_' + getDateStr() + '_BUOI' + chosenLesson + '.jpg';
+        await uploadScreenshot(base64, fileName, 'lesson' + chosenLesson);
+    }
+
     showLoad('Đang ghi nhận...');
     try{
       const d = await apiCall(URL_CHINH,{action:'completeLesson',cccd:session.cccd,major:session.major,lesson:chosenLesson});
       if(!d.success){hideLoad();alert(d.message||'Lỗi');return;}
       await refreshStudent();
-      updateLessonButtons();
       hideLoad();
       alert(`✅ Đã hoàn thành Buổi ${chosenLesson}!\nKết quả đã ghi vào hệ thống.`);
-      
-      if(student && student.lesson3Time) stopCam();
-      
+      stopCam();
+      unlockTabs();
       window.location.reload();
     }catch(e){hideLoad();alert('Lỗi: '+e.message)}
   }
@@ -1541,8 +1390,9 @@ const t2 = (()=>{
 const t3 = (()=>{
   let questions = [], answers = [], current = 0, startTime = 0, timerInt = null;
   let stream = null, started = false, submitted = false;
-  let theoryPool = [];
-  let resultCountdownInt = null;
+  let theoryPool = [], resultCountdownInt = null;
+  let camMonitorInt = null;
+  let isExamActive = false;
 
   async function init(){
     if(t3WelcomeInt){ clearInterval(t3WelcomeInt); t3WelcomeInt = null; }
@@ -1550,116 +1400,32 @@ const t3 = (()=>{
     if(student && student.examStatus === 'Đạt'){
       const examTime = student.examTime ? new Date(student.examTime) : null;
       const unlockTime = examTime ? getUnlockTime(student.examTime, CONFIG.lockTab4Days) : 0;
-      const now = Date.now();
-
-      let html = '<div class="banner success">✅ Bạn đã <b>ĐẠT</b> bài thi lý thuyết với <b>'+student.examScore+'/30</b> câu đúng. Không thể thi lại.<br>';
-      if(examTime){
-        html += '📅 <b>Ngày thi ĐẠT:</b> '+examTime.toLocaleString('vi-VN')+'<br>';
-        if(now < unlockTime){
-          const unlockDateStr = new Date(unlockTime).toLocaleDateString('vi-VN');
-          html += '🔓 <b>Tab 4 (Thi Thực Hành)</b> sẽ mở khóa vào ngày:<br>';
-          html += '<b style="color:#f1c40f;font-size:18px">'+unlockDateStr+'</b>';
-          html += '<div class="lock-box" style="margin-top:10px"><div class="lock-remain-label">Thời gian còn lại:</div><div class="lock-remain-val" id="t3-welcome-cd">...</div></div>';
-        } else {
-          html += '✅ <b style="color:#27ae60">Đã mở khóa Tab 4 (Thi Thực Hành)!</b> Bạn có thể chuyển sang làm bài.';
-        }
+      let html = '<div class="banner success">✅ Bạn đã <b>ĐẠT</b> bài thi LT với <b>'+student.examScore+'/30</b> câu đúng.</div>';
+      if(examTime && Date.now() < unlockTime){
+         html += '<div class="lock-box"><div class="lock-title">⏳ TAB 4 MỞ KHÓA VÀO NGÀY</div><div class="lock-date">'+new Date(unlockTime).toLocaleDateString('vi-VN')+'</div></div>';
       }
-      html += '</div>';
       $('t3-welcome').innerHTML = html;
-
-      if(examTime && now < unlockTime){
-        t3WelcomeInt = setInterval(()=>{
-          const el = $('t3-welcome-cd');
-          if(!el){ clearInterval(t3WelcomeInt); t3WelcomeInt = null; return; }
-          const remain = unlockTime - Date.now();
-          if(remain <= 0){
-            el.innerText = 'Đã mở khóa!';
-            el.style.color = '#27ae60';
-            const tab4Btn = document.querySelector('#tabs [data-tab="4"]');
-            if(tab4Btn) tab4Btn.disabled = false;
-            clearInterval(t3WelcomeInt); t3WelcomeInt = null;
-            t3.init();
-          } else {
-            el.innerText = formatRemain(remain);
-          }
-        }, 1000);
-      }
       return;
     }
 
     if(student){
       const now = Date.now();
-      
       if (student.examStatus === 'Không đạt' && student.examTime) {
         const unlockRetake = getUnlockTime(student.examTime, CONFIG.lockRetakeExamDays);
         if (now < unlockRetake) {
-          let html = `<div class="lock-box">
-            <div class="lock-title">⏳ BẠN ĐÃ THI TRƯỢT. BÀI THI LẠI MỞ KHÓA VÀO NGÀY</div>
-            <div class="lock-date">${new Date(unlockRetake).toLocaleDateString('vi-VN')}</div>
-            <div class="lock-remain-label">Thời gian còn lại:</div>
-            <div class="lock-remain-val" id="t3-retake-cd">...</div>
-          </div>`;
-          $('t3-welcome').innerHTML = html;
-          
-          t3WelcomeInt = setInterval(()=>{
-            const el = $('t3-retake-cd');
-            if(!el){ clearInterval(t3WelcomeInt); t3WelcomeInt = null; return; }
-            const remain = unlockRetake - Date.now();
-            if(remain <= 0){
-              el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
-              const tab3Btn = document.querySelector('#tabs [data-tab="3"]');
-              if(tab3Btn) tab3Btn.disabled = false;
-              clearInterval(t3WelcomeInt); t3WelcomeInt = null;
-              t3.init();
-            } else {
-              el.innerText = formatRemain(remain);
-            }
-          }, 1000);
+          $('t3-welcome').innerHTML = `<div class="lock-box"><div class="lock-title">⏳ BẠN ĐÃ THI TRƯỢT. THI LẠI SAU:</div><div class="lock-date">${new Date(unlockRetake).toLocaleDateString('vi-VN')}</div></div>`;
           return;
         }
       }
-
       const canOpen = student.lesson3Time && now >= getUnlockTime(student.lesson3Time, CONFIG.lockTab3Days);
       if(!canOpen && student.examStatus !== 'Không đạt'){
-        if (!student.lesson3Time) {
-          $('t3-welcome').innerHTML = '<div class="banner warn">⏳ Chưa mở khóa. Cần hoàn thành Buổi 3 trước.</div>';
-          return;
-        }
-        
-        const unlockTime = getUnlockTime(student.lesson3Time, CONFIG.lockTab3Days);
-        const unlockDateStr = new Date(unlockTime).toLocaleDateString('vi-VN');
-        
-        let html = '<div class="lock-box">'
-             +  '<div class="lock-title">⏳ BÀI THI LÝ THUYẾT (TAB 3) SẼ MỞ KHÓA VÀO NGÀY</div>'
-             +  '<div class="lock-date">' + unlockDateStr + '</div>'
-             +  '<div class="lock-remain-label">Thời gian còn lại:</div>'
-             +  '<div class="lock-remain-val" id="t3-lock-cd">...</div>'
-             +  '</div>';
-        $('t3-welcome').innerHTML = html;
-        
-        if(t3WelcomeInt) clearInterval(t3WelcomeInt);
-        t3WelcomeInt = setInterval(()=>{
-          const el = $('t3-lock-cd');
-          if(!el){ clearInterval(t3WelcomeInt); t3WelcomeInt = null; return; }
-          const remain = unlockTime - Date.now();
-          if(remain <= 0){
-            el.innerText = 'Đã mở khóa!';
-            el.style.color = '#27ae60';
-            const tab3Btn = document.querySelector('#tabs [data-tab="3"]');
-            if(tab3Btn) tab3Btn.disabled = false;
-            clearInterval(t3WelcomeInt); t3WelcomeInt = null;
-            t3.init(); 
-          } else {
-            el.innerText = formatRemain(remain);
-          }
-        }, 1000);
+        $('t3-welcome').innerHTML = '<div class="banner warn">⏳ Chưa mở khóa. Cần hoàn thành Buổi 3 và chờ đủ ngày.</div>';
         return;
       }
     }
 
     let btnText = (student && student.examStatus === 'Không đạt') ? '🚀 Thi Lại' : '🚀 Bắt Đầu Làm Bài';
-    $('t3-welcome').innerHTML = `<div class="banner"><b>📝 Bài Thi Lý Thuyết</b><br>30 câu / 45 phút. Đạt ≥25/30. Bắt buộc bật camera. <b>Nếu đã Đạt, không được thi lại.</b></div><button class="btn-main" onclick="t3.start()">${btnText}</button>`;
-    $('t3-welcome').classList.remove('hidden');
+    $('t3-welcome').innerHTML = `<div class="banner"><b>📝 Bài Thi Lý Thuyết</b><br>30 câu / 45 phút. Đạt ≥25/30. <b>Lưu ý: Mất kết nối Camera 120s sẽ bị đánh trượt.</b></div><button class="btn-main" onclick="t3.start()">${btnText}</button>`;
     $('t3-running').classList.add('hidden');
     $('t3-result').classList.add('hidden');
   }
@@ -1671,6 +1437,7 @@ const t3 = (()=>{
       stream = await navigator.mediaDevices.getUserMedia({video:true,audio:false});
       $('t3-video').srcObject = stream;
       $('t3-cam').classList.remove('hidden');
+      startCameraMonitor();
     }catch(e){hideLoad();alert('Cần bật camera để thi! '+e.message);return;}
     
     const pool = [...theoryPool];
@@ -1681,12 +1448,38 @@ const t3 = (()=>{
     }
     answers = new Array(questions.length).fill(-1);
     current = 0; started = true; submitted = false;
+    isExamActive = true;
+    lockTabs();
+    
     $('t3-welcome').classList.add('hidden');
     $('t3-running').classList.remove('hidden');
-    buildGrid();
-    renderQ();
-    startTimer();
+    buildGrid(); renderQ(); startTimer();
     hideLoad();
+  }
+
+  function startCameraMonitor() {
+    if(camMonitorInt) clearInterval(camMonitorInt);
+    camMonitorInt = setInterval(() => {
+      if(!isExamActive || !stream) return;
+      const track = stream.getVideoTracks()[0];
+      if(!track || track.readyState !== 'live' || $('t3-video').paused || $('t3-video').readyState === 0) {
+        clearInterval(camMonitorInt);
+        showCameraWarning(() => {
+            isExamActive = false;
+            clearInterval(timerInt);
+            submitted = true;
+            if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+            $('t3-cam').classList.add('hidden');
+            unlockTabs();
+            
+            apiCall(URL_CHINH, { action: 'markExamCameraFail', cccd: session.cccd, major: session.major })
+            .then(() => {
+                alert('⏳ Đã quá 120s không có Camera. Bài thi bị HỦY. Bạn phải thi lại sau 1 ngày!');
+                window.location.reload();
+            });
+        });
+      }
+    }, 2000);
   }
 
   function startTimer(){
@@ -1722,9 +1515,7 @@ const t3 = (()=>{
     p.opts.forEach((o,i)=>{
       const d = document.createElement('div');
       d.className = 't3-opt'+(answers[current]===i?' sel':'');
-      const letter = String.fromCharCode(65+i);
-      const optText = o.replace(/^[A-D]\.\s*/,'');
-      d.innerHTML = '<span class="lt">'+letter+'</span><span>'+optText+'</span>';
+      d.innerHTML = '<span class="lt">'+String.fromCharCode(65+i)+'</span><span>'+o.replace(/^[A-D]\.\s*/,'')+'</span>';
       d.onclick = ()=>{answers[current]=i;renderQ()};
       opts.appendChild(d);
     });
@@ -1744,7 +1535,16 @@ const t3 = (()=>{
   async function submit(skipConfirm){
     if(submitted)return;
     if(!skipConfirm && !confirm('Nộp bài? Bạn không thể sửa sau khi nộp.'))return;
+    
+    showLoad('Đang xử lý hình ảnh...');
+    const base64 = captureFrameAsBase64('t3-video');
+    if(base64) {
+        const fileName = session.cccd + '_' + sanitizeName(session.name) + '_' + getDateStr() + '_TLT.jpg';
+        await uploadScreenshot(base64, fileName, 'exam');
+    }
+
     submitted = true;
+    isExamActive = false;
     clearInterval(timerInt);
     let correct = 0;
     const details = [];
@@ -1752,21 +1552,24 @@ const t3 = (()=>{
       const p = parseQuestion(q);
       const expected = p.ans.trim().charAt(0).toUpperCase();
       const given = answers[i]>=0 ? String.fromCharCode(65+answers[i]) : '';
-      const ok = given===expected;
-      if(ok)correct++;
-      details.push({i, given, expected, ok, p});
+      if(given===expected)correct++;
+      details.push({i, given, expected, ok:given===expected, p});
     });
+    
     showLoad('Đang nộp bài...');
     try{
       const d = await apiCall(URL_CHINH,{action:'submitExam',cccd:session.cccd,major:session.major,score:correct,correct:correct});
       if(!d.success){hideLoad();alert(d.message||'Lỗi');return;}
-      hideLoad();
       await refreshStudent();
+      hideLoad();
       renderResult(correct, details);
     }catch(e){hideLoad();alert('Lỗi: '+e.message)}
   }
 
   function renderResult(score, details){
+    isExamActive = false;
+    unlockTabs();
+    if(camMonitorInt) clearInterval(camMonitorInt);
     $('t3-running').classList.add('hidden');
     $('t3-result').classList.remove('hidden');
     const pass = score>=CONFIG.passThreshold;
@@ -1774,64 +1577,15 @@ const t3 = (()=>{
     st.className = 't3-status '+(pass?'pass':'fail');
     st.innerText = pass?'ĐẠT':'KHÔNG ĐẠT';
     $('t3-score-num').innerText = score;
-
-    if(pass){
-      let examTimeObj = null;
-      if(student && student.examTime){
-        examTimeObj = new Date(student.examTime);
-      } else {
-        examTimeObj = new Date();
-      }
-      const unlockTime = getUnlockTime(examTimeObj.toISOString(), CONFIG.lockTab4Days);
-      const unlockDateStr = new Date(unlockTime).toLocaleDateString('vi-VN');
-      const now = Date.now();
-
-      let msgHtml = '🎉 Chúc mừng! Bạn đã đạt bài thi lý thuyết.<br>';
-      msgHtml += '📅 <b>Ngày thi ĐẠT:</b> '+examTimeObj.toLocaleString('vi-VN')+'<br>';
-
-      if(now < unlockTime){
-        msgHtml += '🔓 <b>Tab 4 (Thi Thực Hành)</b> sẽ mở khóa vào ngày:<br>';
-        msgHtml += '<b style="color:#f1c40f;font-size:18px">'+unlockDateStr+'</b>';
-        msgHtml += '<div class="lock-box" style="margin-top:10px"><div class="lock-remain-label">Thời gian còn lại:</div><div class="lock-remain-val" id="t3-result-cd">...</div></div>';
-      } else {
-        msgHtml += '✅ <b style="color:#27ae60">Đã mở khóa Tab 4 (Thi Thực Hành)!</b>';
-      }
-      $('t3-msg').innerHTML = msgHtml;
-
-      if(now < unlockTime){
-        if(resultCountdownInt) clearInterval(resultCountdownInt);
-        resultCountdownInt = setInterval(()=>{
-          const el = $('t3-result-cd');
-          if(!el){ clearInterval(resultCountdownInt); resultCountdownInt = null; return; }
-          const remain = unlockTime - Date.now();
-          if(remain <= 0){
-            el.innerText = 'Đã mở khóa!';
-            el.style.color = '#27ae60';
-            const tab4Btn = document.querySelector('#tabs [data-tab="4"]');
-            if(tab4Btn) tab4Btn.disabled = false;
-            clearInterval(resultCountdownInt); resultCountdownInt = null;
-          } else {
-            el.innerText = formatRemain(remain);
-          }
-        }, 1000);
-      }
-    } else {
-      $('t3-msg').innerHTML = 'Rớt. Bạn có thể thi lại vào ngày mai (sau 00:00).';
-    }
-
+    $('t3-msg').innerHTML = pass ? '🎉 Chúc mừng! Bạn đã đạt bài thi lý thuyết.' : 'Rớt. Bạn có thể thi lại vào ngày mai.';
+    
     const rev = $('t3-review'); rev.innerHTML='';
     details.forEach((d,idx)=>{
       const p = d.p;
       const div = document.createElement('div');
       div.className = 't3-review-item '+(d.ok?'c':'w');
-      const optLine = p.opts.map((o,j)=>{
-        const l = String.fromCharCode(65+j);
-        return '<span class="'+(l===d.expected?'c':'')+'">'+o+'</span>';
-      }).join('<br>');
       div.innerHTML = '<div class="t3-rq">Câu '+(idx+1)+': '+p.q+'</div>'+
-        '<div class="t3-ra">'+optLine+'</div>'+
-        '<div class="t3-ra"><span class="'+(d.ok?'c':'w')+'">Bạn chọn: '+(d.given||'(chưa chọn)')+'</span> · Đáp án: <span class="c">'+d.expected+'</span></div>'+
-        '<div class="t3-re"><b>Giải thích:</b> '+p.exp+'</div>';
+        '<div class="t3-ra"><span class="'+(d.ok?'c':'w')+'">Bạn chọn: '+(d.given||'(chưa chọn)')+'</span> · Đáp án: <span class="c">'+d.expected+'</span></div>';
       rev.appendChild(div);
     });
     if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
@@ -1844,8 +1598,84 @@ const t3 = (()=>{
 /* ═══════════════════════════════════════════════════════════
    TAB 4: THI THỰC HÀNH (UPLOAD FILE)
    ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   CÁC HÀM TOÀN CỤC HỖ TRỢ (CAMERA, KHÓA TAB, CHỤP ẢNH)
+   ═══════════════════════════════════════════════════════════ */
+let camWarnInt = null;
+function showCameraWarning(onTimeout) {
+    const overlay = $('camera-warning-overlay');
+    const timerEl = $('camera-warning-timer');
+    let timeLeft = 120;
+    timerEl.innerText = timeLeft;
+    overlay.classList.add('show');
+    
+    if(camWarnInt) clearInterval(camWarnInt);
+    camWarnInt = setInterval(() => {
+        timeLeft--;
+        timerEl.innerText = timeLeft;
+        if(timeLeft <= 0) {
+            clearInterval(camWarnInt);
+            overlay.classList.remove('show');
+            onTimeout();
+        }
+    }, 1000);
+}
+
+function lockTabs() {
+    document.querySelectorAll('#tabs button').forEach(b => {
+        if(parseInt(b.dataset.tab) !== currentTab) b.disabled = true;
+    });
+    window.isLockedActivity = true;
+}
+
+function unlockTabs() {
+    window.isLockedActivity = false;
+    updateLocks();
+}
+
+window.addEventListener('beforeunload', function (e) {
+    if (window.isLockedActivity) {
+        e.preventDefault();
+        e.returnValue = 'Bạn đang trong giờ học/thi. Nếu rời đi, kết quả sẽ không được lưu!';
+        return e.returnValue;
+    }
+});
+
+function getDateStr() {
+    const d = new Date();
+    return String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + d.getFullYear();
+}
+
+function captureFrameAsBase64(videoId) {
+    const video = $(videoId);
+    if(!video || video.readyState < 2) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 640; canvas.height = 480;
+    const ctx = canvas.getContext('2d');
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.75).split(',')[1];
+}
+
+async function uploadScreenshot(base64, fileName, type) {
+    for(let i=0; i<3; i++) {
+        try {
+            const res = await apiCall(URL_CHINH, {
+                action: 'saveScreenshot',
+                cccd: session.cccd, major: session.major, name: session.name,
+                type: type, imageBase64: base64
+            });
+            if(res.success) return true;
+        } catch(e) { console.log('Retry upload ảnh lần '+(i+1)+' thất bại'); }
+    }
+    return false;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 4: THI THỰC HÀNH (UPLOAD VIDEO 3 BƯỚC)
+   ═══════════════════════════════════════════════════════════ */
 const t4 = (()=>{
-  let currentStep = 1;
   let viVoice2 = null;
 
   if('speechSynthesis' in window){
@@ -1881,13 +1711,9 @@ const t4 = (()=>{
       let statusIcon = '⏳';
       
       if(student.practicalStatus === 'Đạt') {
-        statusColor = '#27ae60';
-        statusIcon = '✅';
-        statusHtml = 'ĐẠT';
+        statusColor = '#27ae60'; statusIcon = '✅'; statusHtml = 'ĐẠT';
       } else if (student.practicalStatus === 'Không đạt') {
-        statusColor = '#e74c3c';
-        statusIcon = '❌';
-        statusHtml = 'KHÔNG ĐẠT';
+        statusColor = '#e74c3c'; statusIcon = '❌'; statusHtml = 'KHÔNG ĐẠT';
       } else {
         statusHtml = 'ĐANG CHẤM BÀI';
       }
@@ -1929,49 +1755,66 @@ const t4 = (()=>{
   }
 
   function renderWelcome(){
-    currentStep = 1;
+    const hasV1 = !!student.videoBuoc1;
+    const hasV2 = !!student.videoBuoc2;
+    const hasV3 = !!student.videoBuoc3;
+    const allDone = hasV1 && hasV2 && hasV3;
+
+    const getBtnHtml = (step, hasVideo) => {
+        if(hasVideo) {
+            return `<button class="btn-main done" style="background:#22c55e; margin-top:10px" disabled>✅ Đã tải lên Video Bước ${step}</button>
+                    <p style="margin-top:10px; font-size:12px; color:#16a34a;">Bạn có thể chọn lại file khác để ghi đè nếu muốn.</p>
+                    <label for="file-${step}" class="btn-main" style="background:#94a3b8; margin-top:8px; display:inline-block; font-size:14px; cursor:pointer; padding:10px; max-width:200px; border-radius:6px;">🔄 Chọn lại Video</label>
+                    <input type="file" id="file-${step}" accept="video/*" style="display:none" onchange="t4.handleFile(event, ${step})">`;
+        }
+        return `<button class="btn-main" style="margin-top:10px" onclick="document.getElementById('file-${step}').click()">📁 Chọn Video Bước ${step}</button>
+                <input type="file" id="file-${step}" accept="video/*" style="display:none" onchange="t4.handleFile(event, ${step})">`;
+    };
+
     $('t4-content').innerHTML = `
       <div class="banner success"><b>🎬 Bài Thi Thực Hành</b><br>Bạn đã đạt Lý thuyết với <b>${student.examScore}/30</b> điểm.<br>Vui lòng quay video bằng điện thoại và tải lên theo 3 bước. <b style="color:#f39c12">Lưu ý: Video phải được quay trong ngày hôm nay.</b></div>
       
       <div class="t4-stepbar">
-        <div class="t4-step active" id="t4-s1">1 · CCCD</div>
-        <div class="t4-step" id="t4-s2">2 · Dụng cụ</div>
-        <div class="t4-step" id="t4-s3">3 · Thực hành</div>
+        <div class="t4-step ${hasV1?'done':'active'}" id="t4-s1">1 · CCCD</div>
+        <div class="t4-step ${hasV2?'done':(hasV1?'active':'')}" id="t4-s2">2 · Dụng cụ</div>
+        <div class="t4-step ${hasV3?'done':(hasV2?'active':'')}" id="t4-s3">3 · Thực hành</div>
       </div>
       
       <div id="t4-step-1" class="t4-instr">
         <h3>Bước 1 · Xác minh thông tin cá nhân</h3>
         <p>Quay video rõ mặt, tay cầm CCCD trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau CCCD.</p>
         <div class="warn">⏱ Video dài tối đa 1 phút.</div>
-        <p style="margin-top:10px; color:#4cd137; font-weight:bold;">Sau khi quay xong bạn chọn file vừa quay để up video bước 1 lên</p>
-        <input type="file" id="file-1" accept="video/*" style="display:none" onchange="t4.handleFile(event, 1)">
-        <button class="btn-main" style="margin-top:10px" onclick="document.getElementById('file-1').click()">📁 Chọn Video Bước 1</button>
+        ${getBtnHtml(1, hasV1)}
       </div>
       
-      <div id="t4-step-2" class="t4-instr hidden">
+      <div id="t4-step-2" class="t4-instr ${hasV1?'':'hidden'}">
         <h3>Bước 2 · Xác minh dụng cụ thực hành</h3>
         <p>Quay video thấy mặt tay giơ từng dụng cụ và nói tên dụng cụ.</p>
         <div class="warn">⏱ Video dài tối đa 1 phút.</div>
-        <p style="margin-top:10px; color:#4cd137; font-weight:bold;">Sau khi quay xong bạn chọn file vừa quay để up video bước 2 lên</p>
-        <input type="file" id="file-2" accept="video/*" style="display:none" onchange="t4.handleFile(event, 2)">
-        <button class="btn-main" style="margin-top:10px" onclick="document.getElementById('file-2').click()">📁 Chọn Video Bước 2</button>
+        ${getBtnHtml(2, hasV2)}
       </div>
       
-      <div id="t4-step-3" class="t4-instr hidden">
+      <div id="t4-step-3" class="t4-instr ${hasV2?'':'hidden'}">
         <h3>Bước 3 · Thực hành</h3>
         <p>Quay video quá trình thao tác thực hành.</p>
         <div class="warn">⏱ Video dài tối đa 5 phút.</div>
-        <p style="margin-top:10px; color:#4cd137; font-weight:bold;">Sau khi quay xong bạn chọn file vừa quay để up video bước 3 lên</p>
-        <input type="file" id="file-3" accept="video/*" style="display:none" onchange="t4.handleFile(event, 3)">
-        <button class="btn-main" style="margin-top:10px" onclick="document.getElementById('file-3').click()">📁 Chọn Video Bước 3</button>
+        ${getBtnHtml(3, hasV3)}
       </div>
 
       <div id="t4-upblock" style="display:none; margin-top: 20px;">
         <div class="t4-upbar"><div id="t4-upfill"></div></div>
         <div class="t4-upmsg" id="t4-upmsg">Đang tải lên...</div>
       </div>
+
+      ${allDone ? `
+        <div style="text-align:center; margin-top:30px; padding-top:20px; border-top:1px dashed #cbd5e1;">
+          <p style="color:#16a34a; font-weight:bold; margin-bottom:15px;">🎉 Bạn đã tải lên đủ 3 video. Hãy bấm Nộp Bài.</p>
+          <button class="btn-main" onclick="t4.submit()" style="background:#22c55e; max-width:400px;">📤 NỘP BÀI THI THỰC HÀNH</button>
+        </div>
+      ` : ''}
     `;
-    speak('Chào mừng '+session.name+' đến với bài thi thực hành. Hãy quay video và tải lên lần lượt 3 bước. Bắt đầu với Bước 1. Quay video rõ mặt, tay cầm căn cước công dân trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau căn cước công dân. Video dài tối đa 1 phút. Sau khi quay xong, bạn chọn file vừa quay để up video bước 1 lên.');
+    
+    if(!hasV1) speak('Chào mừng '+session.name+' đến với bài thi thực hành. Hãy quay video và tải lên lần lượt 3 bước. Bắt đầu với Bước 1. Quay video rõ mặt, tay cầm căn cước công dân trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau căn cước công dân.');
   }
 
   async function handleFile(event, stepId) {
@@ -1989,21 +1832,17 @@ const t4 = (()=>{
       return;
     }
 
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    const dateStr = `${day}${month}${year}`;
-    
+    const dateStr = getDateStr();
     const nameSafe = sanitizeName(session.name);
     const fileName = session.cccd + '_' + nameSafe + '_' + dateStr + '_Buoc' + stepId;
 
     $('t4-upblock').style.display = 'block';
     const fill = $('t4-upfill'), msg = $('t4-upmsg');
     fill.style.width = '0%';
+    msg.innerText = 'Đang chuẩn bị...';
     
     const btn = document.querySelector(`#t4-step-${stepId} button`);
-    btn.disabled = true;
-    btn.innerText = '⏳ Đang xử lý...';
+    if(btn) { btn.disabled = true; btn.innerText = '⏳ Đang xử lý...'; }
 
     try {
       await uploadChunks(file, fileName, stepId, (sent, total, text) => {
@@ -2011,54 +1850,44 @@ const t4 = (()=>{
         msg.innerText = text;
       });
       
-      msg.innerText = '✅ Đã tải lên thành công!';
-      await sleep(800);
+      msg.innerText = 'Đang xác nhận với máy chủ...';
+      await sleep(3000); 
       
-      if (stepId < 3) {
-        document.getElementById(`t4-step-${stepId}`).classList.add('hidden');
-        document.getElementById(`t4-s${stepId}`).classList.remove('active');
-        document.getElementById(`t4-s${stepId}`).classList.add('done');
-        
-        document.getElementById(`t4-step-${stepId+1}`).classList.remove('hidden');
-        document.getElementById(`t4-s${stepId+1}`).classList.add('active');
-        
-        $('t4-upblock').style.display = 'none';
-        event.target.value = '';
-
-        if (stepId === 1) {
-          speak('Đã hoàn thành bước 1. Chuyển sang bước 2. Quay video thấy mặt tay giơ từng dụng cụ và nói tên dụng cụ. Video dài tối đa 1 phút. Sau khi quay xong bạn chọn file vừa quay để up video bước 2 lên.');
-        } else if (stepId === 2) {
-          speak('Đã hoàn thành bước 2. Chuyển sang bước 3. Quay video quá trình thao tác thực hành. Video dài tối đa 5 phút. Sau khi quay xong bạn chọn file vừa quay để up video bước 3 lên.');
-        }
+      await refreshStudent();
+      
+      if (student && student['videoBuoc' + stepId]) {
+          msg.innerText = '✅ Đã tải lên thành công!';
+          await sleep(800);
+          renderWelcome(); 
       } else {
-        await finishExam();
+          throw new Error('Máy chủ chưa cập nhật link. Vui lòng thử lại!');
       }
+
     } catch(e) {
       msg.innerHTML = '<span style="color:#e74c3c">❌ Lỗi: ' + e.message + '</span>';
-      btn.disabled = false;
-      btn.innerText = `📁 Chọn Video Bước ${stepId}`;
+      if(btn) { btn.disabled = false; btn.innerText = `📁 Chọn Video Bước ${stepId}`; }
+      event.target.value = '';
     }
   }
 
   async function uploadChunks(blob, fileName, stepId, cb){
-    const CHUNK = 500 * 1024;
+    const CHUNK = 3 * 1024 * 1024; 
     const total = Math.ceil(blob.size/CHUNK);
     const labels = {1:'CCCD',2:'Dụng cụ',3:'Thực hành'};
     
     for(let i=0;i<total;i++){
-      cb(i, total, `Đang gửi ${labels[stepId]}: ${i+1}/${total}...`);
+      cb(i, total, `Đang gửi ${labels[stepId]}: ${Math.round(i/total*100)}%`);
       const part = blob.slice(i*CHUNK, Math.min((i+1)*CHUNK, blob.size));
       const b64 = await blobToB64(part);
+      
       const payload = {
         token: SECRET_VIDEO_TOKEN, action:'uploadChunk',
-        fileName, chunkIndex:i, totalChunks:total, stepId,
-        name:session.name, cccd:session.cccd, major:session.major,
-        chunkData: b64.split(',')[1]
+        fileName, chunkIndex:i, chunkData: b64.split(',')[1]
       };
       
       try{
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
         
         await fetch(URL_VIDEO,{
             method:'POST',
@@ -2067,18 +1896,31 @@ const t4 = (()=>{
             body:JSON.stringify(payload),
             signal: controller.signal
         });
-        
         clearTimeout(timeoutId);
-        await sleep(800); 
       }catch(e){
         if (e.name === 'AbortError') throw new Error('Mạng quá chậm hoặc bị ngắt. Vui lòng thử lại!');
         throw new Error('Lỗi mạng: '+e.message);
       }
     }
     
-    await fetch(URL_VIDEO,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:SECRET_VIDEO_TOKEN,action:'finishChunk',fileName})});
-    await sleep(1500);
-    cb(total, total, '✅ Đã gửi xong');
+    cb(total, total, 'Đang ghép file...');
+    try {
+        await fetch(URL_VIDEO,{
+            method:'POST',
+            mode:'no-cors',
+            headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body:JSON.stringify({
+                token:SECRET_VIDEO_TOKEN, 
+                action:'finishChunk', 
+                fileName: fileName,
+                cccd: session.cccd,
+                major: session.major,
+                stepId: stepId
+            })
+        });
+    } catch(e) {
+        throw new Error('Lỗi ghép file: ' + e.message);
+    }
   }
 
   function blobToB64(blob){
@@ -2090,19 +1932,26 @@ const t4 = (()=>{
     });
   }
 
-  async function finishExam(){
-    showLoad('Đang hoàn tất...');
+  async function submit(){
+    if(!confirm('Bạn có chắc chắn muốn NỘP BÀI? Sau khi nộp sẽ không thể sửa lại video.')) return;
+    showLoad('Đang nộp bài...');
     try{
-      await fetch(URL_CHINH,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({
-        action:'finishPractical', cccd:session.cccd, major:session.major
-      })});
-    }catch(e){}
-    
-    await refreshStudent();
-    hideLoad();
-    
-    $('t4-content').innerHTML = `<div class="t4-result"><div class="ic">🎉</div><h2>Cảm ơn ${session.name}!</h2><p>Bạn đã hoàn thành bài thi thực hành Newstar.<br>Toàn bộ video đã được gửi về Newstar.<br>Vui lòng chờ giáo viên chuyên môn chấm điểm.</p><button class="btn-main" style="max-width:280px;margin-top:20px" onclick="location.reload()">🔄 Đóng</button></div>`;
-    speak('Chúc mừng '+session.name+' đã hoàn thành bài thi thực hành. Trạng thái bài thi đang được chấm.');
+      const d = await apiCall(URL_CHINH, {
+          action:'finishPractical', 
+          cccd:session.cccd, 
+          major:session.major
+      });
+      if(!d.success) throw new Error(d.message || 'Lỗi nộp bài');
+      
+      await refreshStudent();
+      hideLoad();
+      
+      $('t4-content').innerHTML = `<div class="t4-result"><div class="ic">🎉</div><h2>Cảm ơn ${session.name}!</h2><p>Bạn đã hoàn thành bài thi thực hành Newstar.<br>Toàn bộ video đã được gửi về Newstar.<br>Vui lòng chờ giáo viên chuyên môn chấm điểm.</p><button class="btn-main" style="max-width:280px;margin-top:20px" onclick="location.reload()">🔄 Đóng</button></div>`;
+      speak('Chúc mừng '+session.name+' đã hoàn thành bài thi thực hành. Trạng thái bài thi đang được chấm.');
+    } catch(e){
+      hideLoad();
+      alert('Lỗi: ' + e.message);
+    }
   }
 
   function speak(text){
@@ -2116,11 +1965,11 @@ const t4 = (()=>{
     speechSynthesis.speak(u);
   }
 
-  return {init, handleFile};
+  return {init, handleFile, submit};
 })();
 
 /* ═══════════════════════════════════════════════════════════
-   BOOT
+   BOOT (KHỞI TẠO)
    ═══════════════════════════════════════════════════════════ */
 renderMajorOptions();
 attachUppercaseName();
