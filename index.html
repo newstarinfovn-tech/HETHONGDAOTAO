@@ -1197,22 +1197,59 @@ const t2 = (()=>{
     btns[2].innerText = student.lesson3Time ? 'Buổi 3 (Đã học)' : (!canLearn3 ? 'Buổi 3 🔒' : 'Buổi 3');
   }
 
-  function renderLockInfo(){
+    function renderLockInfo(){
     if(t2LockInt){ clearInterval(t2LockInt); t2LockInt = null; }
     const box = $('t2-lock-info');
     if(!box || !student) return;
     let html = '';
+    
+    // Hiển thị cả 3 buổi đã hoàn thành
     if(student.lesson1Time) html += '<div class="banner success">✅ <b>Buổi 1</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson1Time)+'</b></div>';
     if(student.lesson2Time) html += '<div class="banner success">✅ <b>Buổi 2</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson2Time)+'</b></div>';
+    if(student.lesson3Time) html += '<div class="banner success">✅ <b>Buổi 3</b> đã hoàn thành lúc: <b>'+fmtDate(student.lesson3Time)+'</b></div>';
+
     const now = Date.now();
+    
     if (student.lesson1Time && !student.lesson2Time) {
       const unlockT = getUnlockTime(student.lesson1Time, CONFIG.lockLessonDays);
       if (now < unlockT) html += `<div class="lock-box"><div class="lock-title">⏳ BUỔI 2 MỞ KHÓA VÀO NGÀY</div><div class="lock-date">${new Date(unlockT).toLocaleDateString('vi-VN')}</div></div>`;
     }
+    
     if (student.lesson2Time && !student.lesson3Time) {
       const unlockT = getUnlockTime(student.lesson2Time, CONFIG.lockLessonDays);
       if (now < unlockT) html += `<div class="lock-box"><div class="lock-title">⏳ BUỔI 3 MỞ KHÓA VÀO NGÀY</div><div class="lock-date">${new Date(unlockT).toLocaleDateString('vi-VN')}</div></div>`;
     }
+
+    // Đếm ngược thời gian mở khóa Tab 3
+    if(student.lesson3Time){
+      const unlockT3 = getUnlockTime(student.lesson3Time, CONFIG.lockTab3Days);
+      if(now < unlockT3){
+        html += `<div class="lock-box">
+          <div class="lock-title">⏳ BÀI THI LÝ THUYẾT (TAB 3) MỞ KHÓA VÀO NGÀY</div>
+          <div class="lock-date">${new Date(unlockT3).toLocaleDateString('vi-VN')}</div>
+          <div class="lock-remain-label">Thời gian còn lại:</div>
+          <div class="lock-remain-val" id="t2-cd-t3">...</div>
+        </div>`;
+        
+        if(t2LockInt) clearInterval(t2LockInt);
+        t2LockInt = setInterval(()=>{
+          const el = $('t2-cd-t3');
+          if(!el){ clearInterval(t2LockInt); t2LockInt = null; return; }
+          const remain = unlockT3 - Date.now();
+          if(remain <= 0){
+            el.innerText = 'Đã mở khóa!'; el.style.color = '#27ae60';
+            const tab3Btn = document.querySelector('#tabs [data-tab="3"]');
+            if(tab3Btn) tab3Btn.disabled = false;
+            clearInterval(t2LockInt); t2LockInt = null;
+          } else {
+            el.innerText = formatRemain(remain);
+          }
+        }, 1000);
+      } else {
+         html += '<div class="banner success" style="border-left-color:#27ae60">✅ <b>Đã mở khóa Tab 3 (Thi Lý Thuyết)!</b> Bạn có thể chuyển sang thi lý thuyết.</div>';
+      }
+    }
+    
     box.innerHTML = html;
   }
 
@@ -1244,7 +1281,7 @@ const t2 = (()=>{
 
   function startIdleTimer(){
     clearTimeout(idleWarn); clearTimeout(idleKick);
-    idleWarn = setTimeout(()=>{ speakWait(isEndOfLesson?'Em đã học xong, hãy bấm Kết thúc.':session.name+' ơi, em có đang học không?', true); }, 5*60*1000);
+    idleWarn = setTimeout(()=>{ speakWait(isEndOfLesson?'Em đã học xong, hãy bấm Kết thúc.':session.name+' ơi, em có tiếp tục học không?', true); }, 5*60*1000);
   }
   function startKickTimer(){
     clearTimeout(idleWarn); clearTimeout(idleKick);
@@ -1329,7 +1366,7 @@ const t2 = (()=>{
       $('t2-next').style.display = 'none';
       $('t2-checkout').style.display = 'block';
       $('t2-checkout').classList.add('active');
-      await speakWait('Tuyệt vời! Em đã học xong Buổi '+chosenLesson+'. Bấm Kết thúc Buổi học để hệ thống ghi nhận kết quả.');
+      await speakWait('Tuyệt vời! Em đã học xong Buổi '+chosenLesson+'. Bấm nút kết thúc Buổi học và nhìn vào camera để hệ thống ghi nhận kết quả buổi học nhé!');
     }
   }
 
@@ -1400,7 +1437,33 @@ const t3 = (()=>{
     if(student && student.examStatus === 'Đạt'){
       const examTime = student.examTime ? new Date(student.examTime) : null;
       const unlockTime = examTime ? getUnlockTime(student.examTime, CONFIG.lockTab4Days) : 0;
-      let html = '<div class="banner success">✅ Bạn đã <b>ĐẠT</b> bài thi LT với <b>'+student.examScore+'/30</b> câu đúng.</div>';
+      
+      let html = `
+        <div class="banner success" style="
+          background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+          border: 1px solid #a5d6a7;
+          border-radius: 12px;
+          color: #1b5e20;
+          text-align: center;
+          padding: 35px 25px;
+          margin: 20px 0;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+          font-family: inherit;
+        ">
+          <div style="font-size: 40px; margin-bottom: 12px;">🎉</div>
+          <div style="font-size: 1.15rem; font-weight: 500; margin-bottom: 8px;">
+            Chúc mừng <b>${student.name}</b> đã hoàn thành bài thi Lý thuyết!
+          </div>
+          <div style="font-size: 1.05rem; opacity: 0.9; margin-bottom: 15px;">
+            Kết quả đạt: <b style="font-size: 1.6em; color: #2e7d32; font-weight: 700; vertical-align: middle;">${student.examScore}/30</b> câu đúng
+          </div>
+          
+          <div style="font-size: 0.95rem; opacity: 0.8; border-top: 1px dashed #a5d6a7; padding-top: 12px; display: inline-block;">
+            📅 <b>Ngày thi:</b> ${examTime ? examTime.toLocaleString('vi-VN') : '---'}
+          </div>
+          
+        </div>
+      `;
       if(examTime && Date.now() < unlockTime){
          html += '<div class="lock-box"><div class="lock-title">⏳ TAB 4 MỞ KHÓA VÀO NGÀY</div><div class="lock-date">'+new Date(unlockTime).toLocaleDateString('vi-VN')+'</div></div>';
       }
@@ -1424,8 +1487,22 @@ const t3 = (()=>{
       }
     }
 
-    let btnText = (student && student.examStatus === 'Không đạt') ? '🚀 Thi Lại' : '🚀 Bắt Đầu Làm Bài';
+        let btnText = (student && student.examStatus === 'Không đạt') ? '🚀 Thi Lại' : '🚀 Bắt Đầu Làm Bài';
     $('t3-welcome').innerHTML = `<div class="banner"><b>📝 Bài Thi Lý Thuyết</b><br>30 câu / 45 phút. Đạt ≥25/30. <b>Lưu ý: Mất kết nối Camera 120s sẽ bị đánh trượt.</b></div><button class="btn-main" onclick="t3.start()">${btnText}</button>`;
+    
+    // ⚡ THÊM ĐOẠN THOẠI TẠI ĐÂY
+    if ('speechSynthesis' in window) {
+        speechSynthesis.cancel(); // Xóa âm thanh cũ nếu có
+        const textToSpeak = `Chào mừng ${student.name} đến với vòng thi Lý thuyết. Chúc bạn giữ vững sự tự tin, bình tĩnh và đạt được kết quả xuất sắc nhất. Nhấn vào nút Bắt đầu làm bài ngay khi bạn đã sẵn sàng.`;
+        const u = new SpeechSynthesisUtterance(textToSpeak);
+        u.lang = 'vi-VN';
+        u.rate = 1.05; // Tốc độ đọc
+        const viVoice = speechSynthesis.getVoices().find(v => v.lang && v.lang.includes('vi'));
+        if (viVoice) u.voice = viVoice;
+        speechSynthesis.speak(u);
+    }
+    // ⚡ KẾT THÚC ĐOẠN THÊM
+
     $('t3-running').classList.add('hidden');
     $('t3-result').classList.add('hidden');
   }
@@ -1724,11 +1801,6 @@ const t4 = (()=>{
           <h2 style="color:${statusColor}; margin-top:0;">KẾT QUẢ THI THỰC HÀNH</h2>
           <p style="font-size:16px; color:#ccc;">Trạng thái: <b style="color:${statusColor}; font-size:18px;">${statusHtml}</b></p>
           <p style="color:#aaa; margin-top: 15px;">Ngày nộp bài: ${new Date(student.practicalTime).toLocaleString('vi-VN')}</p>
-          <div style="margin-top: 20px; padding: 15px; background: #0a3d52; border-radius: 8px; border-left:4px solid #00a8ff; text-align:left;">
-            <h3 style="color:#00a8ff; margin:0 0 10px 0; font-size:15px;">📚 Kết quả Lý Thuyết</h3>
-            <p style="margin:0; color:#fff;">Điểm: <b>${student.examScore}/30</b> — Đánh giá: <b style="color:#27ae60;">ĐẠT</b></p>
-            <p style="margin:5px 0 0 0; font-size:12px; color:#aaa;">Ngày thi: ${new Date(student.examTime).toLocaleString('vi-VN')}</p>
-          </div>
         </div>
       `;
       return;
@@ -1782,21 +1854,21 @@ const t4 = (()=>{
       
       <div id="t4-step-1" class="t4-instr">
         <h3>Bước 1 · Xác minh thông tin cá nhân</h3>
-        <p>Quay video rõ mặt, tay cầm CCCD trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau CCCD.</p>
+        <p>Up video rõ mặt, tay cầm CCCD trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau CCCD.</p>
         <div class="warn">⏱ Video dài tối đa 1 phút.</div>
         ${getBtnHtml(1, hasV1)}
       </div>
       
       <div id="t4-step-2" class="t4-instr ${hasV1?'':'hidden'}">
         <h3>Bước 2 · Xác minh dụng cụ thực hành</h3>
-        <p>Quay video thấy mặt tay giơ từng dụng cụ và nói tên dụng cụ.</p>
+        <p>Up video thấy rõ mặt, tay giơ từng dụng cụ và nói tên dụng cụ.</p>
         <div class="warn">⏱ Video dài tối đa 1 phút.</div>
         ${getBtnHtml(2, hasV2)}
       </div>
       
       <div id="t4-step-3" class="t4-instr ${hasV2?'':'hidden'}">
         <h3>Bước 3 · Thực hành</h3>
-        <p>Quay video quá trình thao tác thực hành.</p>
+        <p>Up video thấy rõ mặt và toàn bộ quá trình bạn thực hiện bài thi.</p>
         <div class="warn">⏱ Video dài tối đa 5 phút.</div>
         ${getBtnHtml(3, hasV3)}
       </div>
@@ -1814,7 +1886,7 @@ const t4 = (()=>{
       ` : ''}
     `;
     
-    if(!hasV1) speak('Chào mừng '+session.name+' đến với bài thi thực hành. Hãy quay video và tải lên lần lượt 3 bước. Bắt đầu với Bước 1. Quay video rõ mặt, tay cầm căn cước công dân trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau căn cước công dân.');
+    if(!hasV1) speak('Chào mừng '+session.name+' đến với bài thi thực hành. Bạn sẽ cần quay và tải lên 3 video tương ứng với 3 bước sau đây, Bước 1 Xác thực danh tính (Tối đa 1 phút), Cách làm: Quay rõ mặt, tay cầm Căn cước công dân (CCCD) trước ngực, đọc to rõ họ tên và 4 số cuối CCCD, sau đó lật mặt sau của thẻ.Sau khi xong, hãy dừng quay. Bước 2 Kiểm tra dụng cụ (Tối đa 1 phút). Cách làm, Quay video thấy mặt, tay giơ lần lượt từng dụng cụ dùng cho bài thực hành và nói rõ tên từng loại. Sau khi xong, hãy dừng quay. Bước 3: Thao tác thực hành (Tối đa 5 phút). Cách làm Quay video thấy rõ mặt và toàn bộ quá trình bạn thực hiện bài thi. Sau khi xong, hãy dừng quay.Hoàn tất, Sau khi đã có đủ 3 video, bạn hãy chọn các file vừa quay và tải lên (upload) tương ứng vào từng bước trên hệ thống để hoàn thành bài thi nhé!');
   }
 
   async function handleFile(event, stepId) {
@@ -1822,12 +1894,21 @@ const t4 = (()=>{
     if(!file) return;
 
     const lastMod = new Date(file.lastModified);
-    const today = new Date();
+    const now = new Date();
     
-    if (lastMod.getDate() !== today.getDate() || 
-        lastMod.getMonth() !== today.getMonth() || 
-        lastMod.getFullYear() !== today.getFullYear()) {
-      alert('⚠️ LỖI: Video bạn chọn không phải được quay trong ngày hôm nay.\n\nVui lòng quay lại video mới để đảm bảo tính công bằng của kỳ thi!');
+    // CHẶN TUYỆT ĐỐI: So sánh Ngày, Tháng, Năm. Nếu khác ngày hôm nay -> Báo lỗi
+    if (lastMod.getDate() !== now.getDate() || 
+        lastMod.getMonth() !== now.getMonth() || 
+        lastMod.getFullYear() !== now.getFullYear()) {
+      alert('⚠️ LỖI: Hệ thống phát hiện video này KHÔNG PHẢI được quay trong ngày hôm nay!\n\nVui lòng sử dụng app Camera mặc định của điện thoại để quay video mới và tải lên (Không sử dụng video cũ hoặc video đã qua cắt ghép).');
+      event.target.value = '';
+      return;
+    }
+
+    // CHẶN CỨNG: Nếu video được quay cách đây quá 60 phút -> Báo lỗi không cho up
+    const timeDiff = now.getTime() - lastMod.getTime();
+    if (timeDiff > 60 * 60 * 1000) {
+      alert('⚠️ LỖI: Video bạn chọn đã được quay cách đây hơn 60 phút!\n\nVui lòng quay lại video mới ngay bây giờ để đảm bảo tính công bằng của kỳ thi.');
       event.target.value = '';
       return;
     }
@@ -1850,17 +1931,26 @@ const t4 = (()=>{
         msg.innerText = text;
       });
       
-      msg.innerText = 'Đang xác nhận với máy chủ...';
-      await sleep(3000); 
+      msg.innerText = 'Đang chờ máy chủ xác nhận...';
       
-      await refreshStudent();
+      // TỰ ĐỘNG KIỂM TRA LẠI 5 LẦN (Mỗi lần cách 3 giây) ĐỂ CHỜ GOOGLE SHEET CẬP NHẬT
+      let isUpdated = false;
+      for(let check = 1; check <= 5; check++) {
+          await sleep(3000);
+          msg.innerText = `Đang chờ máy chủ xác nhận (${check}/5)...`;
+          await refreshStudent(); 
+          if (student && student['videoBuoc' + stepId]) {
+              isUpdated = true;
+              break;
+          }
+      }
       
-      if (student && student['videoBuoc' + stepId]) {
+      if (isUpdated) {
           msg.innerText = '✅ Đã tải lên thành công!';
           await sleep(800);
           renderWelcome(); 
       } else {
-          throw new Error('Máy chủ chưa cập nhật link. Vui lòng thử lại!');
+          throw new Error('Hệ thống đang bận. Vui lòng tải lại trang (F5) sau 1 phút để kiểm tra!');
       }
 
     } catch(e) {
@@ -1871,7 +1961,8 @@ const t4 = (()=>{
   }
 
   async function uploadChunks(blob, fileName, stepId, cb){
-    const CHUNK = 3 * 1024 * 1024; 
+    // GIẢM XUỐNG 1MB ĐỂ KHÔNG BỊ NGHẼN Ở 5%
+    const CHUNK = 1024 * 1024; 
     const total = Math.ceil(blob.size/CHUNK);
     const labels = {1:'CCCD',2:'Dụng cụ',3:'Thực hành'};
     
@@ -1885,21 +1976,32 @@ const t4 = (()=>{
         fileName, chunkIndex:i, chunkData: b64.split(',')[1]
       };
       
-      try{
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-        
-        await fetch(URL_VIDEO,{
-            method:'POST',
-            mode:'no-cors',
-            headers:{'Content-Type':'text/plain;charset=utf-8'},
-            body:JSON.stringify(payload),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-      }catch(e){
-        if (e.name === 'AbortError') throw new Error('Mạng quá chậm hoặc bị ngắt. Vui lòng thử lại!');
-        throw new Error('Lỗi mạng: '+e.message);
+      let success = false;
+      let retries = 3; // Tự động thử lại 3 lần nếu mạng lỗi
+      
+      while(!success && retries > 0) {
+        try{
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 60000); // Tăng thời gian chờ lên 60s
+          
+          await fetch(URL_VIDEO,{
+              method:'POST',
+              mode:'no-cors',
+              headers:{'Content-Type':'text/plain;charset=utf-8'},
+              body:JSON.stringify(payload),
+              signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          success = true; 
+        }catch(e){
+          retries--;
+          if (retries === 0) {
+            if (e.name === 'AbortError') throw new Error('Mạng quá chậm hoặc bị ngắt. Vui lòng thử lại!');
+            throw new Error('Lỗi mạng: '+e.message);
+          }
+          await sleep(2000); // Nghỉ 2s rồi thử lại phần đó
+        }
       }
     }
     
