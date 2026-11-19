@@ -1765,11 +1765,15 @@ async function uploadScreenshot(base64, fileName, type) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TAB 4: THI THỰC HÀNH (UPLOAD VIDEO 3 BƯỚC)
+   TAB 4: THI THỰC HÀNH (UPLOAD VIDEO - 2 NÚT)
    ═══════════════════════════════════════════════════════════ */
 const t4 = (()=>{
   let viVoice2 = null;
+  let confirmInt = null;
+  const CONFIRM_WAIT_MS = 3 * 60 * 1000; // 3 phút
+  const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdfBNKVHqDgXPM4oYNxJDJ1XgdwvOHU94Ro1R9hm2BRTY4vCA/viewform";
 
+  // ─── Voice ────────────────────────────────────────────────
   if('speechSynthesis' in window){
     const loadV = ()=>{
       const vs = speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.toLowerCase().includes('vi'));
@@ -1781,48 +1785,47 @@ const t4 = (()=>{
     loadV(); speechSynthesis.onvoiceschanged = loadV;
   }
 
+  function speak(text){
+    if(!('speechSynthesis' in window) || !text) return;
+    try{
+      speechSynthesis.cancel();
+      const clean = preprocessSpeech(text);
+      const u = new SpeechSynthesisUtterance(clean);
+      u.lang = 'vi-VN';
+      if(viVoice2) u.voice = viVoice2;
+      u.rate = 1.05;
+      speechSynthesis.speak(u);
+    }catch(e){ console.warn('TTS error', e); }
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────
   function init(){
     if(!student) return;
+    if(confirmInt){ clearInterval(confirmInt); confirmInt = null; }
 
+    // 1. Chưa đạt lý thuyết
     if(student.examStatus !== 'Đạt'){
-      $('t4-content').innerHTML = '<div class="t4-locked"><div class="ic">🔒</div><h2>Chưa đủ điều kiện</h2><p>Cần đạt bài thi lý thuyết (≥25/30) trước.</p><p>Điểm hiện tại: <b>'+student.examScore+'/30</b></p></div>';
+      $('t4-content').innerHTML = `<div class="t4-locked"><div class="ic">🔒</div><h2>Chưa đủ điều kiện</h2><p>Cần đạt bài thi lý thuyết (≥25/30) trước.</p><p>Điểm hiện tại: <b>${student.examScore||0}/30</b></p></div>`;
       return;
     }
 
+    // 2. Chưa có mốc thời gian
     if(!student.examTime){
-      $('t4-content').innerHTML = '<div class="t4-locked"><div class="ic">⏳</div><h2>Chưa có mốc thời gian</h2><p>Vui lòng liên hệ Hotline 0879383389.</p></div>';
+      $('t4-content').innerHTML = `<div class="t4-locked"><div class="ic">⏳</div><h2>Chưa có mốc thời gian</h2><p>Vui lòng liên hệ Hotline 0879383389.</p></div>`;
       return;
     }
 
+    // 3. Đã nộp bài rồi → hiển thị trạng thái
+    if(student.practicalTime){
+      localStorage.removeItem('t4_start_' + session.cccd);
+      renderSubmitted();
+      return;
+    }
+
+    // 4. Chưa tới ngày mở khóa (7 ngày sau khi đạt lý thuyết)
     const unlockTime = getUnlockTime(student.examTime, CONFIG.lockTab4Days);
     const now = Date.now();
-    
-    if(student.practicalTime){
-      let statusHtml = '';
-      let statusColor = '#f39c12';
-      let statusIcon = '⏳';
-      
-      if(student.practicalStatus === 'Đạt') {
-        statusColor = '#27ae60'; statusIcon = '✅'; statusHtml = 'ĐẠT';
-      } else if (student.practicalStatus === 'Không đạt') {
-        statusColor = '#e74c3c'; statusIcon = '❌'; statusHtml = 'KHÔNG ĐẠT';
-      } else {
-        statusHtml = 'ĐANG CHẤM BÀI';
-      }
-
-      $('t4-content').innerHTML = `
-        <div class="card" style="text-align:center; padding: 30px;">
-          <div style="font-size: 60px; margin-bottom: 10px;">${statusIcon}</div>
-          <h2 style="color:${statusColor}; margin-top:0;">KẾT QUẢ THI THỰC HÀNH</h2>
-          <p style="font-size:16px; color:#ccc;">Trạng thái: <b style="color:${statusColor}; font-size:18px;">${statusHtml}</b></p>
-          <p style="color:#aaa; margin-top: 15px;">Ngày nộp bài: ${new Date(student.practicalTime).toLocaleString('vi-VN')}</p>
-        </div>
-      `;
-      return;
-    }
-
     if(now < unlockTime){
-      const unlockDateStr = new Date(unlockTime).toLocaleDateString('vi-VN');
       $('t4-content').innerHTML = `
         <div class="t4-locked">
           <div class="ic">⏳</div>
@@ -1830,246 +1833,190 @@ const t4 = (()=>{
           <p>Bạn đã đạt lý thuyết với <b>${student.examScore}/30</b> điểm.</p>
           <div class="lock-box" style="max-width:440px; margin:16px auto 0">
             <div class="lock-title">BÀI THI THỰC HÀNH (TAB 4) MỞ KHÓA VÀO NGÀY</div>
-            <div class="lock-date">${unlockDateStr}</div>
+            <div class="lock-date">${new Date(unlockTime).toLocaleDateString('vi-VN')}</div>
             <div class="lock-remain-label">Thời gian còn lại:</div>
-            <div class="lock-remain-val">${formatRemain(unlockTime - now)}</div>
+            <div class="lock-remain-val" id="t4-cd-day">...</div>
           </div>
         </div>`;
+      const cdInt = setInterval(()=>{
+        const el = $('t4-cd-day');
+        if(!el){ clearInterval(cdInt); return; }
+        const remain = unlockTime - Date.now();
+        if(remain <= 0){ clearInterval(cdInt); window.location.reload(); return; }
+        el.innerText = formatRemain(remain);
+      }, 1000);
       return;
     }
 
-    renderWelcome();
+    // 5. Đã mở khóa → hiển thị giao diện upload
+    const key = 't4_start_' + session.cccd;
+    let startTs = parseInt(localStorage.getItem(key) || '0', 10);
+    if(!startTs || isNaN(startTs)){
+      startTs = Date.now();
+      localStorage.setItem(key, String(startTs));
+    }
+    const elapsed = Date.now() - startTs;
+    const remainSec = Math.max(0, Math.ceil((CONFIRM_WAIT_MS - elapsed) / 1000));
+    renderUpload(remainSec);
   }
 
-  function renderWelcome(){
-    const hasV1 = !!student.videoBuoc1;
-    const hasV2 = !!student.videoBuoc2;
-    const hasV3 = !!student.videoBuoc3;
-    const allDone = hasV1 && hasV2 && hasV3;
-
-    const getBtnHtml = (step, hasVideo) => {
-        if(hasVideo) {
-            return `<button class="btn-main done" style="background:#22c55e; margin-top:10px" disabled>✅ Đã tải lên Video Bước ${step}</button>
-                    <p style="margin-top:10px; font-size:12px; color:#16a34a;">Bạn có thể chọn lại file khác để ghi đè nếu muốn.</p>
-                    <label for="file-${step}" class="btn-main" style="background:#94a3b8; margin-top:8px; display:inline-block; font-size:14px; cursor:pointer; padding:10px; max-width:200px; border-radius:6px;">🔄 Chọn lại Video</label>
-                    <input type="file" id="file-${step}" accept="video/*" style="display:none" onchange="t4.handleFile(event, ${step})">`;
-        }
-        return `<button class="btn-main" style="margin-top:10px" onclick="document.getElementById('file-${step}').click()">📁 Chọn Video Bước ${step}</button>
-                <input type="file" id="file-${step}" accept="video/*" style="display:none" onchange="t4.handleFile(event, ${step})">`;
-    };
+  // ─── GIAO DIỆN UPLOAD (2 NÚT) ─────────────────────────────
+  function renderUpload(remainSec){
+    const isLocked = remainSec > 0;
+    const btnStyle = isLocked
+      ? 'background:#94a3b8;cursor:not-allowed;'
+      : 'background:#22c55e;cursor:pointer;';
 
     $('t4-content').innerHTML = `
-      <div class="banner success"><b>🎬 Bài Thi Thực Hành</b><br>Bạn đã đạt Lý thuyết với <b>${student.examScore}/30</b> điểm.<br>Vui lòng quay video bằng điện thoại và tải lên theo 3 bước. <b style="color:#f39c12">Lưu ý: Video phải được quay trong ngày hôm nay.</b></div>
-      
-      <div class="t4-stepbar">
-        <div class="t4-step ${hasV1?'done':'active'}" id="t4-s1">1 · CCCD</div>
-        <div class="t4-step ${hasV2?'done':(hasV1?'active':'')}" id="t4-s2">2 · Dụng cụ</div>
-        <div class="t4-step ${hasV3?'done':(hasV2?'active':'')}" id="t4-s3">3 · Thực hành</div>
-      </div>
-      
-      <div id="t4-step-1" class="t4-instr">
-        <h3>Bước 1 · Xác minh thông tin cá nhân</h3>
-        <p>Up video rõ mặt, tay cầm CCCD trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau CCCD.</p>
-        <div class="warn">⏱ Video dài tối đa 30 giây.</div>
-        ${getBtnHtml(1, hasV1)}
-      </div>
-      
-      <div id="t4-step-2" class="t4-instr ${hasV1?'':'hidden'}">
-        <h3>Bước 2 · Xác minh dụng cụ thực hành</h3>
-        <p>Up video thấy rõ mặt, tay giơ từng dụng cụ và nói tên dụng cụ.</p>
-        <div class="warn">⏱ Video dài tối đa 30 giây.</div>
-        ${getBtnHtml(2, hasV2)}
-      </div>
-      
-      <div id="t4-step-3" class="t4-instr ${hasV2?'':'hidden'}">
-        <h3>Bước 3 · Thực hành</h3>
-        <p>Up video thấy rõ mặt và toàn bộ quá trình bạn thực hiện bài thi.</p>
-        <div class="warn">⏱ Video dài tối đa 10 phút.</div>
-        ${getBtnHtml(3, hasV3)}
+      <div class="banner success">
+        <b>🎬 Bài Thi Thực Hành</b><br>
+        Bạn đã đạt Lý thuyết với <b>${student.examScore}/30</b> điểm.<br>
+        Vui lòng quay video thực hành hôm nay và tải lên theo hướng dẫn.
       </div>
 
-      <div id="t4-upblock" style="display:none; margin-top: 20px;">
-        <div class="t4-upbar"><div id="t4-upfill"></div></div>
-        <div class="t4-upmsg" id="t4-upmsg">Đang tải lên...</div>
-      </div>
+      <div class="t4-box" style="margin-top:18px;">
+        <h3>💅 BÀI THI THỰC HÀNH TAY NGHỀ</h3>
+        <p>Bấm nút bên dưới để mở trang tải video (hỗ trợ file cực lớn).</p>
 
-      ${allDone ? `
-        <div style="text-align:center; margin-top:30px; padding-top:20px; border-top:1px dashed #cbd5e1;">
-          <p style="color:#16a34a; font-weight:bold; margin-bottom:15px;">🎉 Bạn đã tải lên đủ 3 video. Hãy bấm Nộp Bài.</p>
-          <button class="btn-main" onclick="t4.submit()" style="background:#22c55e; max-width:400px;">📤 NỘP BÀI THI THỰC HÀNH</button>
-        </div>
-      ` : ''}
+        <button class="btn-upload" style="background:#e11d48;margin-bottom:14px;"
+                onclick="t4.openForm()">
+          🚀 Mở Form Upload Video Bước 1
+        </button>
+
+        <button class="btn-upload"
+                id="t4-confirm-btn"
+                onclick="t4.confirm()"
+                ${isLocked ? 'disabled' : ''}
+                style="${btnStyle}">
+          🔄 Tôi đã Upload xong, Kiểm tra lại
+        </button>
+
+        <p id="t4-countdown-txt" style="font-size:13px;color:#64748b;margin-top:12px;font-weight:600;">
+          ${isLocked
+            ? '🔒 Nút xác nhận sẽ mở khóa sau <b style="color:#ef4444">' + fmtTime(remainSec) + '</b>'
+            : '✅ Bạn có thể bấm xác nhận ngay bây giờ!'}
+        </p>
+      </div>
     `;
-    
-    if(!hasV1) speak('Chào mừng '+session.name+' đến với bài thi thực hành. Bạn sẽ cần quay và tải lên 3 video tương ứng với 3 bước sau đây, Bước 1 Xác thực danh tính (Tối đa 30 giây), Cách làm: Quay rõ mặt, tay cầm Căn cước công dân (CCCD) trước ngực, đọc to rõ họ tên và 4 số cuối CCCD, sau đó lật mặt sau của thẻ.Sau khi xong, hãy dừng quay. Bước 2 Kiểm tra dụng cụ (Tối đa 30 giây). Cách làm, Quay video thấy mặt, tay giơ lần lượt từng dụng cụ dùng cho bài thực hành và nói rõ tên từng loại. Sau khi xong, hãy dừng quay. Bước 3: Thao tác thực hành (Tối đa 10 phút). Cách làm Quay video thấy rõ mặt và toàn bộ quá trình bạn thực hiện bài thi. Sau khi xong, hãy dừng quay.Hoàn tất, Sau khi đã có đủ 3 video, bạn hãy chọn các file vừa quay và tải lên (upload) tương ứng vào từng bước trên hệ thống để hoàn thành bài thi nhé!');
-  }
 
-    async function handleFile(event, stepId) {
-    const file = event.target.files[0];
-    if(!file) return;
-
-    const lastMod = new Date(file.lastModified);
-    const now = new Date();
-    
-    // CHẶN TUYỆT ĐỐI: So sánh Ngày, Tháng, Năm. Nếu khác ngày hôm nay -> Báo lỗi
-    if (lastMod.getDate() !== now.getDate() || 
-        lastMod.getMonth() !== now.getMonth() || 
-        lastMod.getFullYear() !== now.getFullYear()) {
-      alert('⚠️ LỖI: Hệ thống phát hiện video này KHÔNG PHẢI được quay trong ngày hôm nay!\n\nVui lòng sử dụng app Camera mặc định của điện thoại để quay video mới và tải lên (Không sử dụng video cũ hoặc video đã qua cắt ghép).');
-      event.target.value = '';
-      return;
-    }
-
-    // Cảnh báo nếu thời gian quay cách hiện tại quá lâu (ví dụ > 60 phút)
-    const timeDiff = now.getTime() - lastMod.getTime();
-    if (timeDiff > 60 * 60 * 1000) {
-      alert('⚠️ LỖI: Video bạn chọn đã được quay cách đây hơn 60 phút!\n\nVui lòng quay lại video mới ngay bây giờ để đảm bảo tính công bằng của kỳ thi.');
-      event.target.value = '';
-      return;
-    }
-
-    const dateStr = getDateStr();
-    const nameSafe = sanitizeName(session.name);
-    const fileName = session.cccd + '_' + nameSafe + '_' + dateStr + '_Buoc' + stepId;
-
-    $('t4-upblock').style.display = 'block';
-    const fill = $('t4-upfill'), msg = $('t4-upmsg');
-    fill.style.width = '0%';
-    msg.innerText = 'Đang chuẩn bị...';
-    
-    const btn = document.querySelector(`#t4-step-${stepId} button`);
-    if(btn) { btn.disabled = true; btn.innerText = '⏳ Đang xử lý...'; }
-
-    try {
-      await uploadChunks(file, fileName, stepId, (sent, total, text) => {
-        fill.style.width = (sent / total * 100) + '%';
-        msg.innerText = text;
-      });
-      
-      msg.innerText = '✅ Đã tải lên thành công! Đang đồng bộ...';
-      await sleep(1500); 
-      
-      // Bỏ qua việc chờ Sheet, gán trực tiếp vào biến để mở khóa Bước tiếp theo
-      if (student) student['videoBuoc' + stepId] = 'Đã tải lên'; 
-      
-      renderWelcome(); 
-
-    } catch(e) {
-      // PHẦN XỬ LÝ LỖI ĐÃ ĐƯỢC BỔ SUNG ĐẦY ĐỦ
-      msg.innerHTML = '<span style="color:#e74c3c">❌ Lỗi: ' + e.message + '</span>';
-      if(btn) { btn.disabled = false; btn.innerText = `📁 Chọn Video Bước ${stepId}`; }
-      event.target.value = '';
+    if(isLocked){
+      speak(`Chào mừng ${session.name} đến với bài thi thực hành. Bạn hãy bấm nút Mở Form Upload Video Bước 1 để tải video thực hành lên hệ thống. Lưu ý, video phải được quay trong ngày hôm nay. Sau khi upload xong, hãy chờ 3 phút để nút xác nhận mở khóa, rồi bấm nút Tôi đã Upload xong, Kiểm tra lại để hoàn tất bài thi.`);
+      startCountdown(remainSec);
+    } else {
+      speak(`Chào ${session.name}. Bạn có thể bấm nút Tôi đã Upload xong, Kiểm tra lại để hoàn tất bài thi thực hành.`);
     }
   }
 
-  async function uploadChunks(blob, fileName, stepId, cb){
-    // GIẢM XUỐNG 1MB ĐỂ KHÔNG BỊ NGHẼN Ở 5%
-    const CHUNK = 1024 * 1024; 
-    const total = Math.ceil(blob.size/CHUNK);
-    const labels = {1:'CCCD',2:'Dụng cụ',3:'Thực hành'};
-    
-    for(let i=0;i<total;i++){
-      cb(i, total, `Đang gửi ${labels[stepId]}: ${Math.round(i/total*100)}%`);
-      const part = blob.slice(i*CHUNK, Math.min((i+1)*CHUNK, blob.size));
-      const b64 = await blobToB64(part);
-      
-      const payload = {
-        token: SECRET_VIDEO_TOKEN, action:'uploadChunk',
-        fileName, chunkIndex:i, chunkData: b64.split(',')[1]
-      };
-      
-      let success = false;
-      let retries = 3; // Tự động thử lại 3 lần nếu mạng lỗi
-      
-      while(!success && retries > 0) {
-        try{
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 60000); // Tăng thời gian chờ lên 60s
-          
-          await fetch(URL_VIDEO,{
-              method:'POST',
-              mode:'no-cors',
-              headers:{'Content-Type':'text/plain;charset=utf-8'},
-              body:JSON.stringify(payload),
-              signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-          success = true; 
-        }catch(e){
-          retries--;
-          if (retries === 0) {
-            if (e.name === 'AbortError') throw new Error('Mạng quá chậm hoặc bị ngắt. Vui lòng thử lại!');
-            throw new Error('Lỗi mạng: '+e.message);
-          }
-          await sleep(2000); // Nghỉ 2s rồi thử lại phần đó
-        }
+  function startCountdown(remainSec){
+    let remain = remainSec;
+    if(confirmInt) clearInterval(confirmInt);
+    confirmInt = setInterval(()=>{
+      const btn = $('t4-confirm-btn');
+      const txt = $('t4-countdown-txt');
+      if(!btn || !txt){ clearInterval(confirmInt); confirmInt = null; return; }
+
+      remain--;
+      if(remain <= 0){
+        btn.disabled = false;
+        btn.style.background = '#22c55e';
+        btn.style.cursor = 'pointer';
+        txt.innerHTML = '✅ Bạn có thể bấm xác nhận ngay bây giờ!';
+        speak('Nút xác nhận đã mở khóa. Bạn hãy bấm nút Tôi đã Upload xong, Kiểm tra lại để hoàn tất bài thi.');
+        clearInterval(confirmInt); confirmInt = null;
+        return;
       }
-    }
-    
-    cb(total, total, 'Đang ghép file...');
-    try {
-        await fetch(URL_VIDEO,{
-            method:'POST',
-            mode:'no-cors',
-            headers:{'Content-Type':'text/plain;charset=utf-8'},
-            body:JSON.stringify({
-                token:SECRET_VIDEO_TOKEN, 
-                action:'finishChunk', 
-                fileName: fileName,
-                cccd: session.cccd,
-                major: session.major,
-                stepId: stepId
-            })
-        });
-    } catch(e) {
-        throw new Error('Lỗi ghép file: ' + e.message);
-    }
+      txt.innerHTML = '🔒 Nút xác nhận sẽ mở khóa sau <b style="color:#ef4444">' + fmtTime(remain) + '</b>';
+    }, 1000);
   }
 
-  function blobToB64(blob){
-    return new Promise((res,rej)=>{
-      const r = new FileReader();
-      r.onloadend = ()=>res(r.result);
-      r.onerror = rej;
-      r.readAsDataURL(blob);
-    });
-  }
-
-  async function submit(){
-    if(!confirm('Bạn có chắc chắn muốn NỘP BÀI? Sau khi nộp sẽ không thể sửa lại video.')) return;
-    showLoad('Đang nộp bài...');
-    try{
-      const d = await apiCall(URL_CHINH, {
-          action:'finishPractical', 
-          cccd:session.cccd, 
-          major:session.major
+  // ─── MỞ FORM UPLOAD ───────────────────────────────────────
+  function openForm(){
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(session.cccd).then(()=>{
+        alert('📋 Đã copy số CCCD của bạn!\n\nKhi Form mở ra, bạn hãy DÁN (Paste) số CCCD vào ô đầu tiên, sau đó chọn file video và bấm Gửi.');
+        window.open(FORM_URL, '_blank');
+      }).catch(()=>{
+        alert('Vui lòng ghi nhớ số CCCD của bạn: ' + session.cccd + '\nSau đó dán vào ô đầu tiên trên Form.');
+        window.open(FORM_URL, '_blank');
       });
-      if(!d.success) throw new Error(d.message || 'Lỗi nộp bài');
-      
-      await refreshStudent();
-      hideLoad();
-      
-      $('t4-content').innerHTML = `<div class="t4-result"><div class="ic">🎉</div><h2>Cảm ơn ${session.name}!</h2><p>Bạn đã hoàn thành bài thi thực hành Newstar.<br>Toàn bộ video đã được gửi về Newstar.<br>Vui lòng chờ giáo viên chuyên môn chấm điểm.</p><button class="btn-main" style="max-width:280px;margin-top:20px" onclick="location.reload()">🔄 Đóng</button></div>`;
-      speak('Chúc mừng '+session.name+' đã hoàn thành bài thi thực hành. Trạng thái bài thi đang được chấm.');
-    } catch(e){
-      hideLoad();
-      alert('Lỗi: ' + e.message);
+    } else {
+      alert('Vui lòng ghi nhớ số CCCD của bạn: ' + session.cccd + '\nSau đó dán vào ô đầu tiên trên Form.');
+      window.open(FORM_URL, '_blank');
     }
   }
 
-  function speak(text){
-    speechSynthesis.cancel();
-    if(!('speechSynthesis' in window)) return;
-    const clean = preprocessSpeech(text);
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = 'vi-VN';
-    if(viVoice2) u.voice = viVoice2;
-    u.rate=1.05;
-    speechSynthesis.speak(u);
+  // ─── XÁC NHẬN ĐÃ UPLOAD XONG (BỎ QUA CHECK GG DRIVE) ─────
+  async function confirm(){
+    const btn = $('t4-confirm-btn');
+    if(!btn || btn.disabled) return;
+    if(!confirm('Bạn xác nhận đã upload video thực hành xong?')) return;
+
+    showLoad('Đang ghi nhận kết quả...');
+    try{
+      // Bỏ qua checkFormVideo, gọi trực tiếp finishPractical
+      const d = await apiCall(URL_CHINH, {
+        action: 'finishPractical',
+        cccd: session.cccd,
+        major: session.major
+      });
+      hideLoad();
+
+      if(!d.success){
+        alert(d.message || 'Không thể xác nhận. Vui lòng thử lại!');
+        return;
+      }
+
+      await refreshStudent();
+      localStorage.removeItem('t4_start_' + session.cccd);
+      renderSubmitted();
+
+    }catch(e){
+      hideLoad();
+      alert('Lỗi kết nối: ' + e.message + '\n\n(Lưu ý: Hãy chạy trang web qua Localhost hoặc Hosting, không mở trực tiếp file HTML bằng ổ đĩa C/D)');
+    }
   }
 
-  return {init, handleFile, submit};
+  // ─── TRẠNG THÁI ĐÃ HOÀN THÀNH (ĐANG CHẤM) ─────────────────
+  function renderSubmitted(){
+    if(confirmInt){ clearInterval(confirmInt); confirmInt = null; }
+
+    const t = student.practicalTime
+      ? new Date(student.practicalTime).toLocaleString('vi-VN', {hour12:false})
+      : '---';
+
+    if(student.practicalStatus === 'Đạt' || student.practicalStatus === 'Không đạt'){
+      const isPass = student.practicalStatus === 'Đạt';
+      $('t4-content').innerHTML = `
+        <div class="t4-box" style="text-align:center;padding:40px 24px;">
+          <div style="font-size:70px;margin-bottom:12px;">${isPass ? '🎉' : '❌'}</div>
+          <h3 style="color:${isPass ? '#16a34a' : '#ef4444'};font-size:24px;">
+            KẾT QUẢ: ${isPass ? 'ĐẠT' : 'KHÔNG ĐẠT'}
+          </h3>
+          <p style="color:#64748b;margin-top:14px;">📅 <b>Ngày nộp:</b> ${t}</p>
+        </div>`;
+      speak(isPass ? 'Chúc mừng bạn đã đạt bài thi thực hành.' : 'Rất tiếc, bạn chưa đạt bài thi thực hành.');
+      return;
+    }
+
+    $('t4-content').innerHTML = `
+      <div class="t4-box" style="text-align:center;padding:40px 24px;">
+        <div style="font-size:64px;margin-bottom:12px;">✅</div>
+        <h3 style="color:#16a34a;font-size:22px;margin-bottom:16px;">
+          ĐÃ HOÀN THÀNH BÀI THI THỰC HÀNH
+        </h3>
+        <div class="banner success" style="display:inline-block;text-align:center;padding:20px 28px;font-size:16px;line-height:1.7;">
+          <b>📝 Trạng thái bài thi đang được chấm</b><br>
+          <span style="font-size:13px;color:#166534;opacity:.85;">
+            Vui lòng chờ kết quả từ hội đồng thi Newstar.
+          </span>
+        </div>
+        <p style="color:#64748b;margin-top:20px;">📅 <b>Thời gian nộp:</b> ${t}</p>
+      </div>`;
+
+    speak(`Chúc mừng ${session.name} đã hoàn thành bài thi thực hành. Trạng thái bài thi đang được chấm. Vui lòng chờ kết quả từ hội đồng thi.`);
+  }
+
+  return { init, openForm, confirm };
 })();
 
 /* ═══════════════════════════════════════════════════════════
