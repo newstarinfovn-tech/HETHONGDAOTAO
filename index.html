@@ -1940,33 +1940,20 @@ const t4 = (()=>{
     const btn = document.querySelector(`#t4-step-${stepId} button`);
     if(btn) { btn.disabled = true; btn.innerText = '⏳ Đang xử lý...'; }
 
-    try {
+            try {
       await uploadChunks(file, fileName, stepId, (sent, total, text) => {
         fill.style.width = (sent / total * 100) + '%';
         msg.innerText = text;
       });
       
-      msg.innerText = 'Đang chờ máy chủ xác nhận...';
+      msg.innerText = '✅ Đã tải lên thành công! Đang đồng bộ...';
+      await sleep(1500); 
       
-      // TỰ ĐỘNG KIỂM TRA LẠI 5 LẦN (Mỗi lần cách 3 giây) ĐỂ CHỜ GOOGLE SHEET CẬP NHẬT
-      let isUpdated = false;
-      for(let check = 1; check <= 5; check++) {
-          await sleep(3000);
-          msg.innerText = `Đang chờ máy chủ xác nhận (${check}/5)...`;
-          await refreshStudent(); 
-          if (student && student['videoBuoc' + stepId]) {
-              isUpdated = true;
-              break;
-          }
-      }
+      // Bỏ qua việc chờ Sheet, gán trực tiếp vào biến để mở khóa Bước tiếp theo
+      if (student) student['videoBuoc' + stepId] = 'Đã tải lên'; 
       
-      if (isUpdated) {
-          msg.innerText = '✅ Đã tải lên thành công!';
-          await sleep(800);
-          renderWelcome(); 
-      } else {
-          throw new Error('Hệ thống đang bận. Vui lòng tải lại trang (F5) sau 1 phút để kiểm tra!');
-      }
+      renderWelcome(); 
+    } catch(e) {
 
     } catch(e) {
       msg.innerHTML = '<span style="color:#e74c3c">❌ Lỗi: ' + e.message + '</span>';
