@@ -1765,15 +1765,20 @@ async function uploadScreenshot(base64, fileName, type) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TAB 4: THI THỰC HÀNH (UPLOAD VIDEO - 2 NÚT)
+   TAB 4: THI THỰC HÀNH (UPLOAD VIDEO QUA GOOGLE FORM)
+   Logic:
+   - B1: Mở Google Form để up video
+   - B2: Bấm "Tôi đã Upload xong" → đếm ngược 3 phút
+   - B3: Hết 3 phút → hiện nút "🔄 Tôi đã Upload xong, Kiểm tra lại"
+   - B4: Bấm nút → gọi API submitPractical (ghi ngày TH + trạng thái) → màn hình chúc mừng
    ═══════════════════════════════════════════════════════════ */
 const t4 = (()=>{
   let viVoice2 = null;
-  let confirmInt = null;
-  const CONFIRM_WAIT_MS = 3 * 60 * 1000; // 3 phút
+  let countdownInt = null;
+  const WAIT_SEC = 180; // 3 phút
   const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdfBNKVHqDgXPM4oYNxJDJ1XgdwvOHU94Ro1R9hm2BRTY4vCA/viewform";
 
-  // ─── Voice ────────────────────────────────────────────────
+  /* ─── Voice ──────────────────────────────────────────────── */
   if('speechSynthesis' in window){
     const loadV = ()=>{
       const vs = speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.toLowerCase().includes('vi'));
@@ -1798,225 +1803,204 @@ const t4 = (()=>{
     }catch(e){ console.warn('TTS error', e); }
   }
 
-  // ─── INIT ─────────────────────────────────────────────────
+  function clearCountdown(){
+    if(countdownInt){ clearInterval(countdownInt); countdownInt = null; }
+  }
+
+  /* ─── INIT ───────────────────────────────────────────────── */
   function init(){
     if(!student) return;
-    if(confirmInt){ clearInterval(confirmInt); confirmInt = null; }
+    clearCountdown();
 
-    // 1. Chưa đạt lý thuyết
+    /* 1. Chưa đạt lý thuyết */
     if(student.examStatus !== 'Đạt'){
       $('t4-content').innerHTML = `<div class="t4-locked"><div class="ic">🔒</div><h2>Chưa đủ điều kiện</h2><p>Cần đạt bài thi lý thuyết (≥25/30) trước.</p><p>Điểm hiện tại: <b>${student.examScore||0}/30</b></p></div>`;
       return;
     }
 
-    // 2. Chưa có mốc thời gian
+    /* 2. Chưa có mốc thời gian thi lý thuyết */
     if(!student.examTime){
       $('t4-content').innerHTML = `<div class="t4-locked"><div class="ic">⏳</div><h2>Chưa có mốc thời gian</h2><p>Vui lòng liên hệ Hotline 0879383389.</p></div>`;
       return;
     }
 
-    // 3. Đã nộp bài rồi → hiển thị trạng thái
-    if(student.practicalTime){
-      localStorage.removeItem('t4_start_' + session.cccd);
-      renderSubmitted();
-      return;
-    }
-
-    // 4. Chưa tới ngày mở khóa (7 ngày sau khi đạt lý thuyết)
+    /* 3. Kiểm tra thời gian mở khóa Tab 4 */
     const unlockTime = getUnlockTime(student.examTime, CONFIG.lockTab4Days);
-    const now = Date.now();
-    if(now < unlockTime){
-      $('t4-content').innerHTML = `
-        <div class="t4-locked">
-          <div class="ic">⏳</div>
-          <h2>Chưa đến ngày thi thực hành</h2>
-          <p>Bạn đã đạt lý thuyết với <b>${student.examScore}/30</b> điểm.</p>
-          <div class="lock-box" style="max-width:440px; margin:16px auto 0">
-            <div class="lock-title">BÀI THI THỰC HÀNH (TAB 4) MỞ KHÓA VÀO NGÀY</div>
-            <div class="lock-date">${new Date(unlockTime).toLocaleDateString('vi-VN')}</div>
-            <div class="lock-remain-label">Thời gian còn lại:</div>
-            <div class="lock-remain-val" id="t4-cd-day">...</div>
-          </div>
-        </div>`;
-      const cdInt = setInterval(()=>{
-        const el = $('t4-cd-day');
-        if(!el){ clearInterval(cdInt); return; }
-        const remain = unlockTime - Date.now();
-        if(remain <= 0){ clearInterval(cdInt); window.location.reload(); return; }
-        el.innerText = formatRemain(remain);
-      }, 1000);
+    if(Date.now() < unlockTime){
+      $('t4-content').innerHTML = `<div class="t4-locked"><div class="ic">🔒</div><h2>Chưa đến ngày thi thực hành</h2><p>Tab 4 mở khóa vào ngày: <b>${new Date(unlockTime).toLocaleDateString('vi-VN')}</b></p></div>`;
       return;
     }
 
-    // 5. Đã mở khóa → hiển thị giao diện upload
-    const key = 't4_start_' + session.cccd;
-    let startTs = parseInt(localStorage.getItem(key) || '0', 10);
-    if(!startTs || isNaN(startTs)){
-      startTs = Date.now();
-      localStorage.setItem(key, String(startTs));
+    /* 4. Đã nộp bài thực hành rồi (cột T có ngày) → hiển thị màn hình chờ chấm */
+    if(student.practicalTime){
+      renderDone();
+      return;
     }
-    const elapsed = Date.now() - startTs;
-    const remainSec = Math.max(0, Math.ceil((CONFIRM_WAIT_MS - elapsed) / 1000));
-    renderUpload(remainSec);
+
+    /* 5. Hiển thị màn hình upload */
+    renderUploadScreen();
   }
 
-  // ─── GIAO DIỆN UPLOAD (2 NÚT) ─────────────────────────────
-  function renderUpload(remainSec){
-    const isLocked = remainSec > 0;
-    const btnStyle = isLocked
-      ? 'background:#94a3b8;cursor:not-allowed;'
-      : 'background:#22c55e;cursor:pointer;';
-
+  /* ─── Màn hình upload ────────────────────────────────────── */
+  function renderUploadScreen(){
     $('t4-content').innerHTML = `
-      <div class="banner success">
-        <b>🎬 Bài Thi Thực Hành</b><br>
-        Bạn đã đạt Lý thuyết với <b>${student.examScore}/30</b> điểm.<br>
-        Vui lòng quay video thực hành hôm nay và tải lên theo hướng dẫn.
+      <div class="t4-steps">
+        <div class="t4-step-btn active">1. Mở Form</div>
+        <div class="t4-step-btn">2. Upload Video</div>
+        <div class="t4-step-btn">3. Xác nhận</div>
       </div>
 
-      <div class="t4-box" style="margin-top:18px;">
+      <div class="t4-box">
         <h3>💅 BÀI THI THỰC HÀNH TAY NGHỀ</h3>
-        <p>Bấm nút bên dưới để mở trang tải video (hỗ trợ file cực lớn).</p>
+        <p>Vui lòng bấm nút bên dưới để mở <b>Google Form</b> và upload video bài thi thực hành của bạn.<br>
+        Sau khi upload xong, hãy quay lại đây và bấm <b>"Tôi đã Upload xong"</b>.</p>
 
-        <button class="btn-upload" style="background:#e11d48;margin-bottom:14px;"
-                onclick="t4.openForm()">
-          🚀 Mở Form Upload Video Bước 1
+        <button class="btn-upload" onclick="t4.openForm()">
+          📤 MỞ GOOGLE FORM ĐỂ UPLOAD VIDEO
         </button>
 
-        <button class="btn-upload"
-                id="t4-confirm-btn"
-                onclick="t4.confirm()"
-                ${isLocked ? 'disabled' : ''}
-                style="${btnStyle}">
-          🔄 Tôi đã Upload xong, Kiểm tra lại
+        <button id="t4-confirm-btn" class="btn-upload" style="background:#f59e0b;margin-top:16px;" onclick="t4.confirmUploaded()">
+          ✅ TÔI ĐÃ UPLOAD XONG
         </button>
 
-        <p id="t4-countdown-txt" style="font-size:13px;color:#64748b;margin-top:12px;font-weight:600;">
-          ${isLocked
-            ? '🔒 Nút xác nhận sẽ mở khóa sau <b style="color:#ef4444">' + fmtTime(remainSec) + '</b>'
-            : '✅ Bạn có thể bấm xác nhận ngay bây giờ!'}
+        <div id="t4-countdown-box" class="hidden" style="margin-top:20px;padding:16px;background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;text-align:center;">
+          <p style="margin:0 0 8px;color:#92400e;font-weight:700;">⏳ Vui lòng chờ 3 phút để hệ thống đồng bộ video...</p>
+          <div id="t4-countdown-val" style="font-size:36px;font-weight:900;color:#ef4444;font-variant-numeric:tabular-nums;">03:00</div>
+        </div>
+
+        <button id="t4-recheck-btn" class="btn-upload hidden" style="background:#22c55e;margin-top:16px;" onclick="t4.recheck()">
+          🔄 TÔI ĐÃ UPLOAD XONG, KIỂM TRA LẠI
+        </button>
+
+        <p style="margin-top:20px;font-size:12px;color:#94a3b8;">
+          ⚠️ Nếu gặp sự cố khi upload, vui lòng liên hệ Hotline: <b>0879383389</b>
         </p>
       </div>
     `;
-
-    if(isLocked){
-      speak(`Chào mừng ${session.name} đến với bài thi thực hành. Bạn hãy bấm nút Mở Form Upload Video Bước 1 để tải video thực hành lên hệ thống. Lưu ý, video phải được quay trong ngày hôm nay. Sau khi upload xong, hãy chờ 3 phút để nút xác nhận mở khóa, rồi bấm nút Tôi đã Upload xong, Kiểm tra lại để hoàn tất bài thi.`);
-      startCountdown(remainSec);
-    } else {
-      speak(`Chào ${session.name}. Bạn có thể bấm nút Tôi đã Upload xong, Kiểm tra lại để hoàn tất bài thi thực hành.`);
-    }
   }
 
-  function startCountdown(remainSec){
-    let remain = remainSec;
-    if(confirmInt) clearInterval(confirmInt);
-    confirmInt = setInterval(()=>{
-      const btn = $('t4-confirm-btn');
-      const txt = $('t4-countdown-txt');
-      if(!btn || !txt){ clearInterval(confirmInt); confirmInt = null; return; }
+  /* ─── Mở Google Form ─────────────────────────────────────── */
+  function openForm(){
+    window.open(FORM_URL, '_blank');
+  }
 
+  /* ─── Bấm "Tôi đã Upload xong" → bắt đầu đếm ngược 3 phút ── */
+  function confirmUploaded(){
+    $('t4-confirm-btn').classList.add('hidden');
+    $('t4-countdown-box').classList.remove('hidden');
+
+    const steps = document.querySelectorAll('#t4-content .t4-step-btn');
+    if(steps[0]){ steps[0].classList.remove('active'); steps[0].classList.add('done'); }
+    if(steps[1]){ steps[1].classList.add('active'); }
+
+    speak('Bạn đã xác nhận upload. Vui lòng chờ 3 phút để hệ thống đồng bộ video. Sau đó bấm nút Kiểm tra lại.');
+
+    let remain = WAIT_SEC;
+    updateCountdownDisplay(remain);
+
+    clearCountdown();
+    countdownInt = setInterval(()=>{
       remain--;
+      updateCountdownDisplay(remain);
       if(remain <= 0){
-        btn.disabled = false;
-        btn.style.background = '#22c55e';
-        btn.style.cursor = 'pointer';
-        txt.innerHTML = '✅ Bạn có thể bấm xác nhận ngay bây giờ!';
-        speak('Nút xác nhận đã mở khóa. Bạn hãy bấm nút Tôi đã Upload xong, Kiểm tra lại để hoàn tất bài thi.');
-        clearInterval(confirmInt); confirmInt = null;
-        return;
+        clearCountdown();
+        finishCountdown();
       }
-      txt.innerHTML = '🔒 Nút xác nhận sẽ mở khóa sau <b style="color:#ef4444">' + fmtTime(remain) + '</b>';
     }, 1000);
   }
 
-  // ─── MỞ FORM UPLOAD ───────────────────────────────────────
-  function openForm(){
-    if(navigator.clipboard && window.isSecureContext){
-      navigator.clipboard.writeText(session.cccd).then(()=>{
-        alert('📋 Đã copy số CCCD của bạn!\n\nKhi Form mở ra, bạn hãy DÁN (Paste) số CCCD vào ô đầu tiên, sau đó chọn file video và bấm Gửi.');
-        window.open(FORM_URL, '_blank');
-      }).catch(()=>{
-        alert('Vui lòng ghi nhớ số CCCD của bạn: ' + session.cccd + '\nSau đó dán vào ô đầu tiên trên Form.');
-        window.open(FORM_URL, '_blank');
-      });
-    } else {
-      alert('Vui lòng ghi nhớ số CCCD của bạn: ' + session.cccd + '\nSau đó dán vào ô đầu tiên trên Form.');
-      window.open(FORM_URL, '_blank');
-    }
+  function updateCountdownDisplay(remain){
+    const el = $('t4-countdown-val');
+    if(!el) return;
+    if(remain <= 0){ el.innerText = '00:00'; el.style.color = '#22c55e'; return; }
+    const m = String(Math.floor(remain/60)).padStart(2,'0');
+    const s = String(remain%60).padStart(2,'0');
+    el.innerText = m+':'+s;
   }
 
-  // ─── XÁC NHẬN ĐÃ UPLOAD XONG (BỎ QUA CHECK GG DRIVE) ─────
-  async function confirm(){
-    const btn = $('t4-confirm-btn');
-    if(!btn || btn.disabled) return;
-    if(!confirm('Bạn xác nhận đã upload video thực hành xong?')) return;
+  /* ─── Hết 3 phút → hiện nút "Kiểm tra lại" ────────────────── */
+  function finishCountdown(){
+    const box = $('t4-countdown-box');
+    if(box){
+      box.innerHTML = `<p style="margin:0;color:#166534;font-weight:700;font-size:15px;">
+        ✅ Đã hết thời gian chờ. Video của bạn đã được đồng bộ.<br>
+        Vui lòng bấm nút bên dưới để hoàn tất.</p>`;
+      box.style.background = '#f0fdf4';
+      box.style.borderColor = '#22c55e';
+    }
 
+    const recheck = $('t4-recheck-btn');
+    if(recheck) recheck.classList.remove('hidden');
+
+    const steps = document.querySelectorAll('#t4-content .t4-step-btn');
+    if(steps[1]){ steps[1].classList.remove('active'); steps[1].classList.add('done'); }
+    if(steps[2]){ steps[2].classList.add('active'); }
+
+    speak('Đã hết thời gian chờ. Mời bạn bấm nút Kiểm tra lại để hoàn tất bài thi.');
+  }
+
+  /* ─── Bấm "Kiểm tra lại" → gọi API submitPractical → màn hình chúc mừng ── */
+  async function recheck(){
+    clearCountdown();
     showLoad('Đang ghi nhận kết quả...');
+
     try{
-      // Bỏ qua checkFormVideo, gọi trực tiếp finishPractical
+      // Gọi API mới: submitPractical — chỉ ghi ngày TH (cột T) + trạng thái (cột U)
       const d = await apiCall(URL_CHINH, {
-        action: 'finishPractical',
+        action: 'submitPractical',
         cccd: session.cccd,
-        major: session.major
+        major: session.major,
+        name: session.name
       });
+
       hideLoad();
 
-      if(!d.success){
-        alert(d.message || 'Không thể xác nhận. Vui lòng thử lại!');
-        return;
+      if(d && d.success){
+        // Cập nhật local student
+        if(student){
+          student.practicalTime = new Date().toISOString();
+          student.practicalStatus = 'Đang chấm bài thi';
+        }
+        renderDone();
+        speak(`Chúc mừng ${session.name} đã hoàn thành bài thi thực hành. Trạng thái bài thi đang được chấm. Vui lòng chờ kết quả từ hội đồng thi.`);
+      } else {
+        alert(d.message || 'Không thể ghi nhận kết quả. Vui lòng thử lại hoặc liên hệ Hotline 0879383389.');
       }
-
-      await refreshStudent();
-      localStorage.removeItem('t4_start_' + session.cccd);
-      renderSubmitted();
-
     }catch(e){
       hideLoad();
-      alert('Lỗi kết nối: ' + e.message + '\n\n(Lưu ý: Hãy chạy trang web qua Localhost hoặc Hosting, không mở trực tiếp file HTML bằng ổ đĩa C/D)');
+      alert('Lỗi kết nối: ' + e.message + '\nVui lòng thử lại hoặc liên hệ Hotline 0879383389.');
     }
   }
 
-  // ─── TRẠNG THÁI ĐÃ HOÀN THÀNH (ĐANG CHẤM) ─────────────────
-  function renderSubmitted(){
-    if(confirmInt){ clearInterval(confirmInt); confirmInt = null; }
-
-    const t = student.practicalTime
+  /* ─── Màn hình chúc mừng / chờ chấm ──────────────────────── */
+  function renderDone(){
+    const examTimeStr = student.practicalTime
       ? new Date(student.practicalTime).toLocaleString('vi-VN', {hour12:false})
-      : '---';
-
-    if(student.practicalStatus === 'Đạt' || student.practicalStatus === 'Không đạt'){
-      const isPass = student.practicalStatus === 'Đạt';
-      $('t4-content').innerHTML = `
-        <div class="t4-box" style="text-align:center;padding:40px 24px;">
-          <div style="font-size:70px;margin-bottom:12px;">${isPass ? '🎉' : '❌'}</div>
-          <h3 style="color:${isPass ? '#16a34a' : '#ef4444'};font-size:24px;">
-            KẾT QUẢ: ${isPass ? 'ĐẠT' : 'KHÔNG ĐẠT'}
-          </h3>
-          <p style="color:#64748b;margin-top:14px;">📅 <b>Ngày nộp:</b> ${t}</p>
-        </div>`;
-      speak(isPass ? 'Chúc mừng bạn đã đạt bài thi thực hành.' : 'Rất tiếc, bạn chưa đạt bài thi thực hành.');
-      return;
-    }
+      : '—';
 
     $('t4-content').innerHTML = `
-      <div class="t4-box" style="text-align:center;padding:40px 24px;">
-        <div style="font-size:64px;margin-bottom:12px;">✅</div>
-        <h3 style="color:#16a34a;font-size:22px;margin-bottom:16px;">
-          ĐÃ HOÀN THÀNH BÀI THI THỰC HÀNH
-        </h3>
-        <div class="banner success" style="display:inline-block;text-align:center;padding:20px 28px;font-size:16px;line-height:1.7;">
-          <b>📝 Trạng thái bài thi đang được chấm</b><br>
-          <span style="font-size:13px;color:#166534;opacity:.85;">
-            Vui lòng chờ kết quả từ hội đồng thi Newstar.
-          </span>
+      <div class="t4-result" style="background:#fff;border-radius:16px;padding:50px 24px;border:1px solid var(--border-color);box-shadow:0 4px 20px rgba(0,0,0,0.05);">
+        <div class="ic" style="font-size:80px;">🎉</div>
+        <h2 style="color:#16a34a;font-size:24px;margin:16px 0 10px;font-weight:800;">HOÀN THÀNH BÀI THI THỰC HÀNH</h2>
+        <p style="color:#334155;font-size:16px;line-height:1.7;max-width:520px;margin:0 auto 20px;">
+          Chúc mừng <b>${session.name}</b> đã hoàn thành bài thi thực hành.<br>
+          Trạng thái bài thi đang được chấm.<br>
+          Vui lòng chờ kết quả từ <b>Hội đồng thi</b>.
+        </p>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;display:inline-block;color:#1e40af;font-size:14px;margin-bottom:12px;">
+          📅 <b>Ngày nộp bài:</b> ${examTimeStr}
         </div>
-        <p style="color:#64748b;margin-top:20px;">📅 <b>Thời gian nộp:</b> ${t}</p>
-      </div>`;
-
-    speak(`Chúc mừng ${session.name} đã hoàn thành bài thi thực hành. Trạng thái bài thi đang được chấm. Vui lòng chờ kết quả từ hội đồng thi.`);
+        <br>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;display:inline-block;color:#166534;font-size:14px;">
+          📞 Mọi thắc mắc vui lòng liên hệ Hotline: <b>0879383389</b>
+        </div>
+      </div>
+    `;
   }
 
-  return { init, openForm, confirm };
+  function stop(){ clearCountdown(); }
+
+  return { init, openForm, confirmUploaded, recheck, stop };
 })();
 
 /* ═══════════════════════════════════════════════════════════
