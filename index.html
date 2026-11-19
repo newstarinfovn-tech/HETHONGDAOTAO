@@ -1725,14 +1725,25 @@ function getDateStr() {
 
 function captureFrameAsBase64(videoId) {
     const video = $(videoId);
-    if(!video || video.readyState < 2) return null;
+    if(!video || !video.srcObject) {
+        console.warn('Không tìm thấy luồng camera!');
+        return null;
+    }
+    
     const canvas = document.createElement('canvas');
     canvas.width = 640; canvas.height = 480;
     const ctx = canvas.getContext('2d');
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.75).split(',')[1];
+    
+    try {
+        // Vẽ trực tiếp không cần check readyState để tránh lỗi đơ trên mobile
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.75).split(',')[1];
+    } catch(e) {
+        console.error('Lỗi vẽ canvas:', e);
+        return null;
+    }
 }
 
 async function uploadScreenshot(base64, fileName, type) {
@@ -1744,7 +1755,11 @@ async function uploadScreenshot(base64, fileName, type) {
                 type: type, imageBase64: base64
             });
             if(res.success) return true;
-        } catch(e) { console.log('Retry upload ảnh lần '+(i+1)+' thất bại'); }
+            else throw new Error(res.message || 'Lỗi từ Server');
+        } catch(e) { 
+            console.error('Thử lại up ảnh lần '+(i+1)+' thất bại:', e.message); 
+            if(i === 2) return false; 
+        }
     }
     return false;
 }
