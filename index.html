@@ -272,6 +272,43 @@ button{font-family:inherit}
 #camera-warning-overlay h2 { color: #ef4444; font-size: 22px; margin-bottom: 10px; font-weight: 800; }
 #camera-warning-timer { font-size: 60px; font-weight: 900; color: #f59e0b; margin: 15px 0; }
 /* CSS CHO TAB 4 UPLOAD */
+/* KHUNG MÃ XÁC NHẬN NGẪU NHIÊN */
+.t4-code-container {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #fffbeb;
+    border: 2px dashed #f59e0b;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+}
+.t4-code-label {
+    font-size: 14px;
+    color: #92400e;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+.t4-code-display {
+    font-size: 42px;
+    font-weight: 900;
+    color: #ef4444;
+    letter-spacing: 6px;
+    font-family: monospace;
+    animation: blinkCode 1.2s infinite alternate;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+}
+@keyframes pulseBorder {
+    0% { border-color: #fca5a5; box-shadow: 0 0 0 rgba(220, 38, 38, 0); }
+    100% { border-color: #ef4444; box-shadow: 0 0 15px rgba(220, 38, 38, 0.4); }
+}
+}
+.t4-code-note {
+    font-size: 13px;
+    color: #b45309;
+    font-style: italic;
+}
 .t4-steps { display: flex; gap: 10px; margin-bottom: 20px; }
 .t4-step-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: #fff; font-weight: bold; color: var(--text-muted); text-align: center; font-size: 14px;}
 .t4-step-btn.active { background: #eff6ff; border-color: var(--brand-blue); color: var(--brand-blue); }
@@ -284,6 +321,131 @@ button{font-family:inherit}
 .btn-upload.done { background: #22c55e; }
 .upload-progress { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 15px; overflow: hidden; display: none; }
 .upload-progress > div { height: 100%; background: var(--brand-blue-light); width: 0; transition: width 0.3s; }
+
+/* =========================================================
+   VIDEO HƯỚNG DẪN TAB 4 — NÚT + MODAL
+   ========================================================= */
+.t4-video-tutorial-bar {
+    text-align: center;
+    margin: 0 0 20px 0;
+    animation: fadeIn 0.4s ease;
+}
+
+.t4-video-tutorial-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 26px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+    transition: all 0.25s ease;
+    animation: pulseT4 2.2s infinite;
+    letter-spacing: 0.2px;
+}
+.t4-video-tutorial-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(239, 68, 68, 0.5);
+}
+.t4-video-tutorial-btn i {
+    font-size: 18px;
+}
+@keyframes pulseT4 {
+    0%, 100% { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35); }
+    50%      { box-shadow: 0 6px 30px rgba(239, 68, 68, 0.6); }
+}
+
+/* Modal */
+.t4-video-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+}
+.t4-video-modal.hidden { display: none !important; }
+
+.t4-video-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(6px);
+}
+
+.t4-video-modal-box {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+    animation: t4ModalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes t4ModalIn {
+    from { opacity: 0; transform: scale(0.9) translateY(15px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.t4-video-modal-box h3 {
+    margin: 0 0 14px;
+    color: var(--brand-blue);
+    font-size: 15px;
+    font-weight: 800;
+    text-align: center;
+    padding: 0 36px;
+    line-height: 1.4;
+}
+
+.t4-video-iframe-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    max-height: 68vh;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+}
+.t4-video-iframe-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.t4-video-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s;
+    z-index: 2;
+}
+.t4-video-modal-close:hover {
+    background: #ef4444;
+    color: #fff;
+    transform: rotate(90deg);
+}
 </style>
 </head>
 <body>
@@ -451,9 +613,9 @@ button{font-family:inherit}
   <div id="t3-welcome"></div>
   <div id="t3-running" class="hidden">
     <div id="t3-cam" class="hidden"><video id="t3-video" autoplay playsinline muted></video></div>
-    <div class="t3-head"><span>📝 Bài Thi Lý Thuyết</span><span id="t3-timer">⏱ 45:00</span></div>
     <div class="t3-progress"><div id="t3-prog-bar"></div></div>
     <div class="t3-grid" id="t3-grid"></div>
+    <div class="t3-head" style="margin-top: 16px; margin-bottom: 16px;"><span>📝 Thời gian làm bài thi lý thuyết còn lại</span><span id="t3-timer">⏱ 45:00</span></div>
     <div class="t3-card">
       <div class="t3-qh"><span>Câu <span id="t3-qn">1</span>/30</span><span id="t3-ans-cnt">Đã trả lời: 0/30</span></div>
       <div class="t3-qt" id="t3-qt"></div>
@@ -498,6 +660,17 @@ button{font-family:inherit}
   </div>
 </div>
 
+<!-- MODAL VIDEO HƯỚNG DẪN TAB 4 -->
+<div id="t4-video-modal" class="t4-video-modal hidden">
+  <div class="t4-video-modal-backdrop" onclick="closeT4Video()"></div>
+  <div class="t4-video-modal-box">
+    <button class="t4-video-modal-close" onclick="closeT4Video()" aria-label="Đóng">&times;</button>
+    <h3>🎬 Video Hướng Dẫn Quay Bài Thi Thực Hành</h3>
+    <div class="t4-video-iframe-wrap" style="display: flex; align-items: center;">
+      <video id="t4-video-player" src="huongdanquayvd.mp4" controls playsinline style="width: 100%; height: 100%; border-radius: 12px; object-fit: contain;"></video>
+    </div>
+  </div>
+</div>
 <div id="loading" class="hidden"><div class="spin"></div><span id="loading-text">Đang xử lý...</span></div>
 
 <!-- Data scripts -->
@@ -652,6 +825,13 @@ function saveSession(){if(session)localStorage.setItem('ns_sess',JSON.stringify(
 function loadSession(){try{session=JSON.parse(localStorage.getItem('ns_sess')||'null')}catch(e){session=null}}
 function logout(){
   if(!confirm('Đăng xuất?'))return;
+  window.isLoggingOut = true; // Báo hiệu chủ động đăng xuất
+  
+  // Xóa cảnh báo camera nếu đang hiện
+  const overlay = document.getElementById('camera-warning-overlay');
+  if(overlay) overlay.classList.remove('show');
+  if(window.camWarnInt) clearInterval(window.camWarnInt);
+
   localStorage.removeItem('ns_sess');
   session=null; student=null;
   updateUserBox();
@@ -1125,11 +1305,15 @@ const t2 = (()=>{
     $('t2-video').srcObject = null;
   }
 
-  function startCameraMonitor() {
+    function startCameraMonitor() {
     if(camMonitorInt) clearInterval(camMonitorInt);
+    let coverCount = 0; // Đếm số lần bị che
+    
     camMonitorInt = setInterval(() => {
-      if(!isLearningActive || !stream) return;
+      if(window.isLoggingOut || !isLearningActive || !stream) return;
       const track = stream.getVideoTracks()[0];
+      
+      // 1. Kiểm tra mất kết nối vật lý
       if(!track || track.readyState !== 'live' || $('t2-video').paused || $('t2-video').readyState === 0) {
         clearInterval(camMonitorInt);
         showCameraWarning(() => {
@@ -1145,8 +1329,34 @@ const t2 = (()=>{
             stopCam();
             unlockTabs();
         });
+        return;
       }
-    }, 2000);
+
+      // 2. KIỂM TRA BỊ CHE (Chạy mỗi 3 giây)
+      if (isCameraCovered($('t2-video'))) {
+          coverCount++;
+          if (coverCount >= 3) {
+              if (!window.isT2WarningActive) {
+                  window.isT2WarningActive = true;
+                  showCameraWarning(() => {
+                      isLearningActive = false;
+                      stopIdle();
+                      speechSynthesis.cancel();
+                      alert('⚠️ PHÁT HIỆN CAMERA BỊ CHE QUÁ 120s! Buổi học đã bị hủy.');
+                      stopCam();
+                      unlockTabs();
+                      window.location.reload();
+                  });
+              }
+          }
+      } else {
+          coverCount = 0; 
+          if (window.isT2WarningActive) {
+              hideCameraWarning();
+              window.isT2WarningActive = false;
+          }
+      }
+    }, 3000); // 3 giây kiểm tra 1 lần
   }
 
   async function init(){
@@ -1534,11 +1744,14 @@ const t3 = (()=>{
     hideLoad();
   }
 
-  function startCameraMonitor() {
+    function startCameraMonitor() {
     if(camMonitorInt) clearInterval(camMonitorInt);
+    let coverCount = 0;
+    
     camMonitorInt = setInterval(() => {
-      if(!isExamActive || !stream) return;
+      if(window.isLoggingOut || !isExamActive || !stream) return;
       const track = stream.getVideoTracks()[0];
+      
       if(!track || track.readyState !== 'live' || $('t3-video').paused || $('t3-video').readyState === 0) {
         clearInterval(camMonitorInt);
         showCameraWarning(() => {
@@ -1555,8 +1768,40 @@ const t3 = (()=>{
                 window.location.reload();
             });
         });
+        return;
       }
-    }, 2000);
+
+      // KIỂM TRA BỊ CHE
+      if (isCameraCovered($('t3-video'))) {
+          coverCount++;
+          if (coverCount >= 3) {
+              if (!window.isT3WarningActive) {
+                  window.isT3WarningActive = true;
+                  showCameraWarning(() => {
+                      isExamActive = false;
+                      clearInterval(timerInt);
+                      submitted = true;
+                      if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+                      $('t3-cam').classList.add('hidden');
+                      unlockTabs();
+                      
+                      // Gọi API đánh trượt
+                      apiCall(URL_CHINH, { action: 'markExamCameraFail', cccd: session.cccd, major: session.major })
+                      .then(() => {
+                          alert('⚠️ PHÁT HIỆN CAMERA BỊ CHE QUÁ 120s! Bài thi bị HỦY.');
+                          window.location.reload();
+                      });
+                  });
+              }
+          }
+      } else {
+          coverCount = 0;
+          if (window.isT3WarningActive) {
+              hideCameraWarning();
+              window.isT3WarningActive = false;
+          }
+      }
+    }, 3000); 
   }
 
   function startTimer(){
@@ -1679,6 +1924,47 @@ const t3 = (()=>{
    CÁC HÀM TOÀN CỤC HỖ TRỢ (CAMERA, KHÓA TAB, CHỤP ẢNH)
    ═══════════════════════════════════════════════════════════ */
 let camWarnInt = null;
+// Hàm kiểm tra camera có bị che (băng dính, giấy...) hay không
+function isCameraCovered(videoElement) {
+    if (!videoElement || videoElement.videoWidth === 0) return false;
+    
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 24;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        let totalLum = 0;
+        let minLum = 255, maxLum = 0;
+        const pixelCount = canvas.width * canvas.height;
+        
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i+1], b = data[i+2];
+            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+            totalLum += lum;
+            if (lum < minLum) minLum = lum;
+            if (lum > maxLum) maxLum = lum;
+        }
+        
+        const avgLum = totalLum / pixelCount;
+        const variance = maxLum - minLum;
+        
+        console.log(`[Camera Check] Sáng TB: ${avgLum.toFixed(1)} | Chênh lệch: ${variance.toFixed(1)}`);
+
+        if (avgLum < 20 && variance < 20) return true;
+        if (avgLum > 230 && variance < 20) return true;
+        if (variance < 15) return true; // Bị che bằng vật phẳng (tay, bìa, vải...)
+        
+        return false;
+    } catch (e) {
+        console.error("LỖI ĐỌC CAMERA:", e);
+        return false;
+    }
+}
 function showCameraWarning(onTimeout) {
     const overlay = $('camera-warning-overlay');
     const timerEl = $('camera-warning-timer');
@@ -1696,6 +1982,15 @@ function showCameraWarning(onTimeout) {
             onTimeout();
         }
     }, 1000);
+}
+
+function hideCameraWarning() {
+    const overlay = $('camera-warning-overlay');
+    if (overlay) overlay.classList.remove('show');
+    if (camWarnInt) {
+        clearInterval(camWarnInt);
+        camWarnInt = null;
+    }
 }
 
 function lockTabs() {
@@ -1775,7 +2070,7 @@ async function uploadScreenshot(base64, fileName, type) {
 const t4 = (()=>{
   let viVoice2 = null;
   let countdownInt = null;
-  const WAIT_SEC = 180; // 3 phút
+  const WAIT_SEC = 60; // 1 phút
   const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdfBNKVHqDgXPM4oYNxJDJ1XgdwvOHU94Ro1R9hm2BRTY4vCA/viewform";
 
   // ─── Voice ────────────────────────────────────────────────
@@ -1849,7 +2144,7 @@ const t4 = (()=>{
         <button class="btn-upload" onclick="t4.openForm()">📤 BƯỚC 1: BẤM VÀO ĐÂY UPLOAD VIDEO BÀI THI</button>
         <button id="t4-confirm-btn" class="btn-upload" style="background:#f59e0b;margin-top:16px;" onclick="t4.confirmUploaded()">✅ BƯỚC 2: BẤM VÀO ĐÂY SAU KHI ĐÃ UPLOAD XONG</button>
         <div id="t4-countdown-box" class="hidden" style="margin-top:20px;padding:16px;background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;text-align:center;">
-          <p style="margin:0 0 8px;color:#92400e;font-weight:700;">⏳ Vui lòng chờ 3 phút để hệ thống đồng bộ video...</p>
+          <p style="margin:0 0 8px;color:#92400e;font-weight:700;">⏳ Vui lòng chờ 1 phút để hệ thống đồng bộ video...</p>
           <div id="t4-countdown-val" style="font-size:36px;font-weight:900;color:#ef4444;font-variant-numeric:tabular-nums;">03:00</div>
         </div>
         <button id="t4-recheck-btn" class="btn-upload hidden" style="background:#22c55e;margin-top:16px;" onclick="t4.recheck()">🔄 TÔI ĐÃ UPLOAD XONG, KIỂM TRA LẠI</button>
@@ -1881,7 +2176,7 @@ const t4 = (()=>{
     const steps = document.querySelectorAll('#t4-content .t4-step-btn');
     if(steps[0]){ steps[0].classList.remove('active'); steps[0].classList.add('done'); }
     if(steps[1]){ steps[1].classList.add('active'); }
-    speak('Bạn đã xác nhận upload. Vui lòng chờ 3 phút để hệ thống đồng bộ video. Sau đó bấm nút Kiểm tra lại.');
+    speak('Bạn đã xác nhận upload. Vui lòng chờ 1 phút để hệ thống đồng bộ video. Sau đó bấm nút Kiểm tra lại.');
     let remain = WAIT_SEC;
     updateCountdownDisplay(remain);
     clearCountdown();
@@ -1973,6 +2268,120 @@ if(session){
     switchTab(2);
   });
 }
+/* ═══════════════════════════════════════════════════════════
+   XỬ LÝ VIDEO HƯỚNG DẪN TAB 4
+   ═══════════════════════════════════════════════════════════ */
+function openT4Video() {
+    const modal  = document.getElementById('t4-video-modal');
+    const iframe = document.getElementById('t4-video-iframe');
+    if (!modal || !iframe) return;
+    // Link YouTube Shorts của bạn đã được chuyển sang dạng nhúng
+    iframe.src = 'https://www.youtube-nocookie.com/embed/NCqng7CoVAA?autoplay=1&rel=0&modestbranding=1';
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeT4Video() {
+    const modal  = document.getElementById('t4-video-modal');
+    const iframe = document.getElementById('t4-video-iframe');
+    if (!modal || !iframe) return;
+    modal.classList.add('hidden');
+    iframe.src = ''; // Dừng video khi đóng
+    document.body.style.overflow = '';
+}
+
+// Đóng bằng phím ESC
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('t4-video-modal');
+        if (modal && !modal.classList.contains('hidden')) closeT4Video();
+    }
+});
+
+// TỰ ĐỘNG CHÈN NÚT ĐỎ (Dùng setInterval để đảm bảo 100% nút sẽ hiện ra)
+function openT4Video() {
+    const modal  = document.getElementById('t4-video-modal');
+    const video  = document.getElementById('t4-video-player');
+    
+    if (!modal) { alert('LỖI: Không tìm thấy khung Popup HTML!'); return; }
+    if (!video) { alert('LỖI: Không tìm thấy thẻ Video!'); return; }
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    video.play().catch(function(error) {
+        console.log("Trình duyệt chặn autoplay:", error);
+    });
+}
+
+function closeT4Video() {
+    const modal  = document.getElementById('t4-video-modal');
+    const video  = document.getElementById('t4-video-player');
+    if (!modal) return;
+    
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    
+    if (video) {
+        video.pause();
+        video.currentTime = 0; 
+    }
+}
+// Hàm tạo mã code ngẫu nhiên 4 ký tự (Dựa trên CCCD + Ngày hôm nay)
+function generateStudentCode(cccd) {
+    const d = new Date();
+    const dateStr = String(d.getDate()).padStart(2, '0') + String(d.getMonth() + 1).padStart(2, '0') + d.getFullYear();
+    const seed = String(cccd) + dateStr + "NEWSTAR_SECRET_2026";
+    
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+        hash = (hash << 5) - hash + seed.charCodeAt(i);
+        hash |= 0;
+    }
+    
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    let temp = Math.abs(hash);
+    for (let i = 0; i < 4; i++) {
+        code += chars[temp % chars.length];
+        temp = Math.floor(temp / chars.length);
+    }
+    return code;
+}
+
+setInterval(function() {
+    const t4Content = document.getElementById('t4-content');
+    if (!t4Content || !session) return;
+    
+    const steps = t4Content.querySelector('.t4-steps');
+    
+    if (steps && !t4Content.querySelector('.t4-video-tutorial-bar')) {
+        
+        // 1. Tạo Khung Mã Xác Nhận
+        const codeBox = document.createElement('div');
+        codeBox.className = 't4-code-container';
+        const studentCode = generateStudentCode(session.cccd);
+        codeBox.innerHTML = `
+            <div class="t4-code-label">MÃ XÁC NHẬN CỦA BẠN HÔM NAY</div>
+            <div class="t4-code-display">${studentCode}</div>
+            <div class="t4-code-note">⚠️ Bạn ghi nhớ mã này và ĐỌC TO khi cầm CCCD quay video ở bước 1.</div>
+        `;
+        
+        // 2. Tạo Nút Xem Video
+        const bar = document.createElement('div');
+        bar.className = 't4-video-tutorial-bar';
+        bar.innerHTML = `
+            <button type="button" class="t4-video-tutorial-btn" onclick="openT4Video()">
+                <i class="fas fa-play-circle"></i>
+                Xem Video Hướng Dẫn Quay Bài Thi Thực Hành
+            </button>
+        `;
+        
+        // Chèn Mã Code trước, Nút Video sau
+        steps.parentNode.insertBefore(codeBox, steps.nextSibling);
+        steps.parentNode.insertBefore(bar, codeBox.nextSibling);
+    }
+}, 1000);
 </script>
 </body>
 </html>
