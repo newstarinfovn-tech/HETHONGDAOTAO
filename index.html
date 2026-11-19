@@ -1844,10 +1844,10 @@ const t4 = (()=>{
         <div class="t4-step-btn">3. Xác nhận</div>
       </div>
       <div class="t4-box">
-        <h3>💅 BÀI THI THỰC HÀNH TAY NGHỀ</h3>
-        <p>Vui lòng bấm nút bên dưới để mở <b>Google Form</b> và upload video bài thi thực hành của bạn.<br>Sau khi upload xong, hãy quay lại đây và bấm <b>"Tôi đã Upload xong"</b>.</p>
-        <button class="btn-upload" onclick="t4.openForm()">📤 MỞ GOOGLE FORM ĐỂ UPLOAD VIDEO</button>
-        <button id="t4-confirm-btn" class="btn-upload" style="background:#f59e0b;margin-top:16px;" onclick="t4.confirmUploaded()">✅ TÔI ĐÃ UPLOAD XONG</button>
+        <h3>💅 HƯỚNG DẪN NỘP BÀI THI THỰC HÀNH </h3>
+        <p>Bước 1: Bấm vào nút<b> "BẤM VÀO ĐÂY UPLOAD VIDEO BÀI THI" </b> bên dưới để tải lên video bài thi thực hành của bạn.<br> Bước 2: Sau khi quá trình tải lên hoàn tất, hãy quay lại trang này và bấm vào nút <b>"BẤM VÀO ĐÂY SAU KHI ĐÃ UPLOAD XONG"</b>để xác nhận nộp bài.</p>
+        <button class="btn-upload" onclick="t4.openForm()">📤 BƯỚC 1: BẤM VÀO ĐÂY UPLOAD VIDEO BÀI THI</button>
+        <button id="t4-confirm-btn" class="btn-upload" style="background:#f59e0b;margin-top:16px;" onclick="t4.confirmUploaded()">✅ BƯỚC 2: BẤM VÀO ĐÂY SAU KHI ĐÃ UPLOAD XONG</button>
         <div id="t4-countdown-box" class="hidden" style="margin-top:20px;padding:16px;background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;text-align:center;">
           <p style="margin:0 0 8px;color:#92400e;font-weight:700;">⏳ Vui lòng chờ 3 phút để hệ thống đồng bộ video...</p>
           <div id="t4-countdown-val" style="font-size:36px;font-weight:900;color:#ef4444;font-variant-numeric:tabular-nums;">03:00</div>
@@ -1857,7 +1857,23 @@ const t4 = (()=>{
       </div>`;
   }
 
-  function openForm(){ window.open(FORM_URL, '_blank'); }
+    // ─── MỞ FORM UPLOAD & TỰ ĐỘNG COPY CCCD ───────────────────
+  function openForm(){
+    if(navigator.clipboard && window.isSecureContext){
+      // Trình duyệt hỗ trợ copy (chỉ chạy trên https hoặc localhost)
+      navigator.clipboard.writeText(session.cccd).then(()=>{
+        alert('📋 Đã copy số CCCD của bạn!\n\nKhi Form mở ra, bạn hãy DÁN (Paste) số CCCD vào ô đầu tiên, sau đó chọn file video và bấm Gửi.');
+        window.open(FORM_URL, '_blank');
+      }).catch(()=>{
+        alert('Vui lòng ghi nhớ số CCCD của bạn: ' + session.cccd + '\nSau đó dán vào ô đầu tiên trên Form.');
+        window.open(FORM_URL, '_blank');
+      });
+    } else {
+      // Trình duyệt không hỗ trợ hoặc web chạy http (không bảo mật)
+      alert('Vui lòng ghi nhớ số CCCD của bạn: ' + session.cccd + '\nSau đó dán vào ô đầu tiên trên Form.');
+      window.open(FORM_URL, '_blank');
+    }
+  }
 
   function confirmUploaded(){
     $('t4-confirm-btn').classList.add('hidden');
@@ -1892,18 +1908,33 @@ const t4 = (()=>{
     speak('Đã hết thời gian chờ. Mời bạn bấm nút Kiểm tra lại để hoàn tất bài thi.');
   }
 
-  async function recheck(){
+    async function recheck(){
     clearCountdown();
     showLoad('Đang ghi nhận kết quả...');
+    
+    // Thêm bộ đếm thời gian để chống treo màn hình
+    const timeoutId = setTimeout(() => {
+      hideLoad();
+      alert('Kết nối quá lâu! Vui lòng kiểm tra mạng hoặc thử lại.');
+    }, 10000);
+
     try{
       const d = await apiCall(URL_CHINH, { action: 'submitPractical', cccd: session.cccd, major: session.major, name: session.name });
+      clearTimeout(timeoutId); // Xóa bộ đếm nếu thành công
       hideLoad();
+      
       if(d && d.success){
         if(student){ student.practicalTime = new Date().toISOString(); student.practicalStatus = 'Đang chấm bài thi'; }
         renderDone();
         speak(`Chúc mừng ${session.name} đã hoàn thành bài thi thực hành. Trạng thái bài thi đang được chấm. Vui lòng chờ kết quả từ hội đồng thi.`);
-      } else { alert(d.message || 'Không thể ghi nhận kết quả.'); }
-    }catch(e){ hideLoad(); alert('Lỗi kết nối: ' + e.message); }
+      } else { 
+        alert(d.message || 'Không thể ghi nhận kết quả.'); 
+      }
+    }catch(e){ 
+      clearTimeout(timeoutId);
+      hideLoad(); 
+      alert('Lỗi kết nối: ' + e.message); 
+    }
   }
 
   function renderDone(){
