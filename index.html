@@ -74,6 +74,11 @@ button{font-family:inherit}
     width:100%;padding:12px;background:#f8fafc;color:var(--text-main);
     border:2px solid var(--border-color);border-radius:8px;font-size:14px;transition:0.2s;
 }
+@media screen and (max-width: 768px) {
+    .field input, .field select, .mo-box input, .mo-box select {
+        font-size: 16px !important; /* Chống iOS tự động zoom */
+    }
+}
 .field input:focus,.field select:focus{outline:none;border-color:var(--brand-blue-light);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,0.1);}
 .field input:disabled,.field select:disabled{opacity:.6;cursor:not-allowed}
 .radio-g{display:flex;gap:20px;flex-wrap:wrap;padding-top:5px}
@@ -105,6 +110,11 @@ button{font-family:inherit}
 /* ÔN THI (TAB 2) */
 #t2-timer{background:#fff;padding:8px 16px;border-radius:20px;color:#d97706;font-weight:800;font-size:14px;display:inline-block;margin-bottom:10px;border:1px solid #fcd34d;}
 #t2-cam,#t3-cam{position:fixed;top:80px;left:16px;width:110px;height:140px;background:#000;border:3px solid var(--brand-blue);border-radius:12px;overflow:hidden;z-index:30;cursor:move;touch-action:none;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+@media(max-width:600px){
+    /* Thu nhỏ camera trên điện thoại để không che nội dung */
+    #t2-cam { width: 80px; height: 100px; top: 70px; left: 10px; }
+    #t3-cam { width: 80px; height: 60px; top: 70px; left: 10px; }
+}
 #t3-cam{width:120px;height:90px;}
 #t2-cam video,#t3-cam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);pointer-events:none}
 #t2-cam .lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.8);color:#fff;font-size:10px;text-align:center;padding:4px;pointer-events:none}
@@ -142,7 +152,9 @@ button{font-family:inherit}
 .t3-progress{background:#e2e8f0;height:10px;border-radius:20px;overflow:hidden;margin-bottom:16px}
 .t3-progress>div{height:100%;background:linear-gradient(90deg,var(--brand-blue-light),var(--brand-gold));width:0;transition:.3s}
 .t3-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;padding:12px;background:#fff;border-radius:12px;margin-bottom:16px;border:1px solid var(--border-color);}
-@media(max-width:600px){.t3-grid{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:600px){
+    .t3-grid{grid-template-columns:repeat(5,1fr); gap: 8px; padding: 8px;} 
+}
 .t3-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#64748b;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:0.2s;}
 .t3-cell:hover{background:#e2e8f0;}
 .t3-cell.answered{background:#22c55e;color:#fff}
@@ -597,7 +609,7 @@ button{font-family:inherit}
       <button data-lesson="2" onclick="t2.selectLesson(2)" disabled>BUỔI 2 🔒</button>
       <button data-lesson="3" onclick="t2.selectLesson(3)" disabled>BUỔI 3 🔒</button>
     </div>
-    <div class="t2-speed" id="t2-speed"><span>Tốc độ: <span id="t2-speed-disp">1.2x</span></span><button onclick="t2.speedDown()">➖ Chậm</button><button onclick="t2.speedUp()">➕ Nhanh</button></div>
+    <div class="t2-speed" id="t2-speed"><span>Tốc độ: <span id="t2-speed-disp">1.0x</span></span><button onclick="t2.speedDown()">➖ Chậm</button><button onclick="t2.speedUp()">➕ Nhanh</button></div>
     <div class="t2-class" id="t2-class">
       <button id="t2-lecture" onclick="t2.lecture()">📖 Bắt đầu học</button>
       <button id="t2-next" onclick="t2.next()">⏭️ Qua bài tiếp</button>
@@ -824,23 +836,38 @@ document.addEventListener('keydown', initSpeechEngine, {once:true});
 function saveSession(){if(session)localStorage.setItem('ns_sess',JSON.stringify(session))}
 function loadSession(){try{session=JSON.parse(localStorage.getItem('ns_sess')||'null')}catch(e){session=null}}
 function logout(){
-  if(!confirm('Đăng xuất?'))return;
+  if(!confirm('Bạn có chắc chắn muốn ĐĂNG XUẤT? Mọi hoạt động đang làm dở sẽ bị hủy!'))return;
   window.isLoggingOut = true; // Báo hiệu chủ động đăng xuất
   
-  // Xóa cảnh báo camera nếu đang hiện
+  // 1. Dừng âm thanh đọc (nếu đang đọc)
+  if('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+  }
+
+  // 2. Tắt Camera Tab 2 (nếu đang mở)
+  if(typeof t2 !== 'undefined' && t2.stopCam) {
+      try { t2.stopCam(); } catch(e){}
+  }
+  
+  // 3. Tắt Camera Tab 3 (nếu đang mở)
+  const t3Video = document.getElementById('t3-video');
+  if (t3Video && t3Video.srcObject) {
+      t3Video.srcObject.getTracks().forEach(track => track.stop());
+      t3Video.srcObject = null;
+  }
+
+  // 4. Tắt cảnh báo camera nếu đang hiện
   const overlay = document.getElementById('camera-warning-overlay');
   if(overlay) overlay.classList.remove('show');
   if(window.camWarnInt) clearInterval(window.camWarnInt);
 
+  // 5. Xóa dữ liệu đăng nhập
   localStorage.removeItem('ns_sess');
-  session=null; student=null;
-  updateUserBox();
-  document.querySelectorAll('#tabs button').forEach((b,i)=>{
-      if(b.dataset.tab == '1'){ b.disabled = false; }
-      else if (b.dataset.tab == '0') { b.disabled = false; }
-      else { b.disabled = true; }
-  });
-  switchTab(1);
+  session = null; 
+  student = null;
+  
+  // 6. Tải lại trang để reset toàn bộ đồng hồ, trạng thái và về Tab 1
+  window.location.reload();
 }
 function updateUserBox(){
   if(session&&session.name){$('userBox').classList.remove('hidden');$('userName').innerText='👤 '+session.name+' — '+session.major;}
@@ -1262,7 +1289,7 @@ async function submitReg(){
    ═══════════════════════════════════════════════════════════ */
 const t2 = (()=>{
   let chosenLesson = 0, currentStep = 0, lessonData = [], isSpeaking = false;
-  let speed = 1.2, startTime = 0, timerInt = null;
+  let speed = 1.0, startTime = 0, timerInt = null;
   let idleWarn = null, idleKick = null, isEndOfLesson = false;
   let viVoice = null, voiceRetry = 0;
   let stream = null, recog = null;
@@ -1274,10 +1301,20 @@ const t2 = (()=>{
     if(!('speechSynthesis' in window))return;
     const voices = window.speechSynthesis.getVoices();
     const vi = voices.filter(v => v.lang && v.lang.toLowerCase().includes('vi'));
-    if(vi.length>0){
-      const malePattern = /(nam\s*minh|male|nam\s*vietnam)/i;
-      const nonMale = vi.filter(v => !malePattern.test(v.name));
-      viVoice = nonMale.find(v => /female|nữ|linh|hoai|mai/i.test(v.name)) || nonMale[0] || vi[0];
+    if(vi.length > 0){
+      const bestVoices = [
+         v => v.name.includes('Google') && v.name.includes('Tiếng Việt'),
+         v => v.name.includes('HoaiMy'),
+         v => v.name.includes('Linh'),
+         v => v.name.includes('Mai'),
+         v => /female|nữ/i.test(v.name)
+      ];
+      let found = null;
+      for(let test of bestVoices){
+         found = vi.find(test);
+         if(found) break;
+      }
+      viVoice = found || vi[0]; 
     } else if(voiceRetry++ < 20){
       setTimeout(loadVoices, 300);
     }
@@ -1522,7 +1559,7 @@ const t2 = (()=>{
     return new Promise(resolve => {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'vi-VN'; if(viVoice) u.voice = viVoice;
-      u.rate = speed; u.pitch = 1.0;
+      u.rate = speed; u.pitch = 1.1;
       const to = setTimeout(resolve, 15000 + text.length * 200);
       u.onend = ()=>{clearTimeout(to);resolve()}; u.onerror = ()=>{clearTimeout(to);resolve()};
       speechSynthesis.speak(u);
@@ -1530,7 +1567,7 @@ const t2 = (()=>{
   }
 
   function splitText(t, max){
-    const init = t.match(/[^.?!,\n]+[.?!,\n]*/g) || [t];
+    const init = t.match(/[^.?!\n]+[.?!\n]*/g) || [t];
     const out = [];
     init.forEach(ch => {
       if(ch.length>max){ let cur=''; ch.split(' ').forEach(w=>{ if((cur+w).length<max) cur+=w+' '; else {if(cur.trim())out.push(cur.trim());cur=w+' '} }); if(cur.trim())out.push(cur.trim()); }
@@ -1686,7 +1723,12 @@ const t3 = (()=>{
       if (student.examStatus === 'Không đạt' && student.examTime) {
         const unlockRetake = getUnlockTime(student.examTime, CONFIG.lockRetakeExamDays);
         if (now < unlockRetake) {
-          $('t3-welcome').innerHTML = `<div class="lock-box"><div class="lock-title">⏳ BẠN ĐÃ THI TRƯỢT. THI LẠI SAU:</div><div class="lock-date">${new Date(unlockRetake).toLocaleDateString('vi-VN')}</div></div>`;
+          const rDate = new Date(unlockRetake);
+          const dArr = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+          const dName = dArr[rDate.getDay()];
+          const dStr = dName + ', ngày ' + String(rDate.getDate()).padStart(2, '0') + '/' + String(rDate.getMonth() + 1).padStart(2, '0') + '/' + rDate.getFullYear();
+          
+          $('t3-welcome').innerHTML = `<div class="lock-box"><div class="lock-title">⏳ BẠN ĐÃ THI TRƯỢT. ĐƯỢC PHÉP THI LẠI VÀO:</div><div class="lock-date" style="font-size:24px; text-transform:none;">${dStr}</div></div>`;
           return;
         }
       }
@@ -1764,7 +1806,7 @@ const t3 = (()=>{
             
             apiCall(URL_CHINH, { action: 'markExamCameraFail', cccd: session.cccd, major: session.major })
             .then(() => {
-                alert('⏳ Đã quá 120s không có Camera. Bài thi bị HỦY. Bạn phải thi lại sau 1 ngày!');
+                alert('⏳ Đã quá 120s không có Camera. Bài thi sẽ bị HỦY. Bạn phải thi lại sau 24h!');
                 window.location.reload();
             });
         });
@@ -1788,7 +1830,7 @@ const t3 = (()=>{
                       // Gọi API đánh trượt
                       apiCall(URL_CHINH, { action: 'markExamCameraFail', cccd: session.cccd, major: session.major })
                       .then(() => {
-                          alert('⚠️ PHÁT HIỆN CAMERA BỊ CHE QUÁ 120s! Bài thi bị HỦY.');
+                          alert('⚠️ PHÁT HIỆN CAMERA BỊ CHE QUÁ 120s! Bài thi bị HỦY. Bạn phải thi lại sau 24h!');
                           window.location.reload();
                       });
                   });
@@ -1899,7 +1941,21 @@ const t3 = (()=>{
     st.className = 't3-status '+(pass?'pass':'fail');
     st.innerText = pass?'ĐẠT':'KHÔNG ĐẠT';
     $('t3-score-num').innerText = score;
-    $('t3-msg').innerHTML = pass ? '🎉 Chúc mừng! Bạn đã đạt bài thi lý thuyết.' : 'Rớt. Bạn có thể thi lại vào ngày mai.';
+    if (pass) {
+      $('t3-msg').innerHTML = '🎉 Chúc mừng! Bạn đã đạt bài thi lý thuyết.';
+    } else {
+      // Tính toán ngày thi lại dựa vào cấu hình
+      const retakeDate = new Date();
+      retakeDate.setDate(retakeDate.getDate() + CONFIG.lockRetakeExamDays);
+      
+      const daysOfWeek = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      const dayName = daysOfWeek[retakeDate.getDay()];
+      const d = String(retakeDate.getDate()).padStart(2, '0');
+      const m = String(retakeDate.getMonth() + 1).padStart(2, '0');
+      const y = retakeDate.getFullYear();
+      
+      $('t3-msg').innerHTML = 'Rớt. Bạn có thể thi lại vào <b style="color:#ea580c; font-size:16px;">' + dayName + ', ngày ' + d + '/' + m + '/' + y + '</b>.';
+    }
     
     const rev = $('t3-review'); rev.innerHTML='';
     details.forEach((d,idx)=>{
@@ -2234,7 +2290,19 @@ const t4 = (()=>{
 
   function renderDone(){
     const examTimeStr = student.practicalTime ? new Date(student.practicalTime).toLocaleString('vi-VN', {hour12:false}) : '—';
-    $('t4-content').innerHTML = `<div class="t4-result" style="background:#fff;border-radius:16px;padding:50px 24px;border:1px solid var(--border-color);box-shadow:0 4px 20px rgba(0,0,0,0.05);"><div class="ic" style="font-size:80px;">🎉</div><h2 style="color:#16a34a;font-size:24px;margin:16px 0 10px;font-weight:800;">HOÀN THÀNH BÀI THI THỰC HÀNH</h2><p style="color:#334155;font-size:16px;line-height:1.7;max-width:520px;margin:0 auto 20px;">Chúc mừng <b>${session.name}</b> đã hoàn thành bài thi thực hành.<br>Trạng thái bài thi đang được chấm.<br>Vui lòng chờ kết quả từ <b>Hội đồng thi</b>.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;display:inline-block;color:#1e40af;font-size:14px;margin-bottom:12px;">📅 <b>Ngày nộp bài:</b> ${examTimeStr}</div><br><div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;display:inline-block;color:#166534;font-size:14px;">📞 Mọi thắc mắc vui lòng liên hệ Hotline: <b>0879383389</b></div></div>`;
+    
+    // NẾU ĐÃ ĐƯỢC ADMIN CHẤM LÀ "ĐẠT"
+    if (student.practicalStatus === 'Đạt') {
+        $('t4-content').innerHTML = `<div class="t4-result" style="background:#fff;border-radius:16px;padding:50px 24px;border:1px solid var(--border-color);box-shadow:0 4px 20px rgba(0,0,0,0.05);"><div class="ic" style="font-size:80px;">🏆</div><h2 style="color:#16a34a;font-size:26px;margin:16px 0 10px;font-weight:800;">CHÚC MỪNG BẠN ĐÃ ĐẠT</h2><p style="color:#334155;font-size:16px;line-height:1.7;max-width:520px;margin:0 auto 20px;">Bạn đã xuất sắc vượt qua kỳ thi thực hành nghề <b>${session.major}</b>.<br>Kết quả của bạn đã được Hội đồng thi phê duyệt.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;display:inline-block;color:#1e40af;font-size:14px;margin-bottom:12px;">📅 <b>Ngày thi:</b> ${examTimeStr}</div><br><div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;display:inline-block;color:#166534;font-size:14px;">📞 Liên hệ nhận chứng chỉ: <b>0879383389</b></div></div>`;
+    } 
+    // NẾU BỊ ĐÁNH TRƯỢT
+    else if (student.practicalStatus === 'Không đạt') {
+        $('t4-content').innerHTML = `<div class="t4-result" style="background:#fff;border-radius:16px;padding:50px 24px;border:1px solid var(--border-color);box-shadow:0 4px 20px rgba(0,0,0,0.05);"><div class="ic" style="font-size:80px;">❌</div><h2 style="color:#ef4444;font-size:26px;margin:16px 0 10px;font-weight:800;">RẤT TIẾC, BẠN CHƯA ĐẠT</h2><p style="color:#334155;font-size:16px;line-height:1.7;max-width:520px;margin:0 auto 20px;">Bài thi thực hành của bạn chưa đạt yêu cầu.<br>Vui lòng liên hệ Văn phòng Trường để được hướng dẫn.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;display:inline-block;color:#1e40af;font-size:14px;margin-bottom:12px;">📅 <b>Ngày thi:</b> ${examTimeStr}</div><br><div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;display:inline-block;color:#166534;font-size:14px;">📞 Hotline hỗ trợ: <b>0879383389</b></div></div>`;
+    } 
+    // NẾU ĐANG CHỜ CHẤM (Mặc định)
+    else {
+        $('t4-content').innerHTML = `<div class="t4-result" style="background:#fff;border-radius:16px;padding:50px 24px;border:1px solid var(--border-color);box-shadow:0 4px 20px rgba(0,0,0,0.05);"><div class="ic" style="font-size:80px;">🎉</div><h2 style="color:#16a34a;font-size:24px;margin:16px 0 10px;font-weight:800;">HOÀN THÀNH BÀI THI THỰC HÀNH</h2><p style="color:#334155;font-size:16px;line-height:1.7;max-width:520px;margin:0 auto 20px;">Chúc mừng <b>${session.name}</b> đã hoàn thành bài thi thực hành.<br>Trạng thái bài thi đang được chấm.<br>Vui lòng chờ kết quả từ <b>Hội đồng thi</b>.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;display:inline-block;color:#1e40af;font-size:14px;margin-bottom:12px;">📅 <b>Ngày nộp bài:</b> ${examTimeStr}</div><br><div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;display:inline-block;color:#166534;font-size:14px;">📞 Mọi thắc mắc vui lòng liên hệ Hotline: <b>0879383389</b></div></div>`;
+    }
   }
 
   function stop(){ clearCountdown(); }
