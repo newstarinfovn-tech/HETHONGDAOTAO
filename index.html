@@ -1870,21 +1870,21 @@ const t4 = (()=>{
       <div id="t4-step-1" class="t4-instr">
         <h3>Bước 1 · Xác minh thông tin cá nhân</h3>
         <p>Up video rõ mặt, tay cầm CCCD trước ngực, đọc rõ họ tên và 4 số cuối, sau đó lật mặt sau CCCD.</p>
-        <div class="warn">⏱ Video dài tối đa 1 phút.</div>
+        <div class="warn">⏱ Video dài tối đa 30 giây.</div>
         ${getBtnHtml(1, hasV1)}
       </div>
       
       <div id="t4-step-2" class="t4-instr ${hasV1?'':'hidden'}">
         <h3>Bước 2 · Xác minh dụng cụ thực hành</h3>
         <p>Up video thấy rõ mặt, tay giơ từng dụng cụ và nói tên dụng cụ.</p>
-        <div class="warn">⏱ Video dài tối đa 1 phút.</div>
+        <div class="warn">⏱ Video dài tối đa 30 giây.</div>
         ${getBtnHtml(2, hasV2)}
       </div>
       
       <div id="t4-step-3" class="t4-instr ${hasV2?'':'hidden'}">
         <h3>Bước 3 · Thực hành</h3>
         <p>Up video thấy rõ mặt và toàn bộ quá trình bạn thực hiện bài thi.</p>
-        <div class="warn">⏱ Video dài tối đa 5 phút.</div>
+        <div class="warn">⏱ Video dài tối đa 10 phút.</div>
         ${getBtnHtml(3, hasV3)}
       </div>
 
@@ -1901,10 +1901,10 @@ const t4 = (()=>{
       ` : ''}
     `;
     
-    if(!hasV1) speak('Chào mừng '+session.name+' đến với bài thi thực hành. Bạn sẽ cần quay và tải lên 3 video tương ứng với 3 bước sau đây, Bước 1 Xác thực danh tính (Tối đa 1 phút), Cách làm: Quay rõ mặt, tay cầm Căn cước công dân (CCCD) trước ngực, đọc to rõ họ tên và 4 số cuối CCCD, sau đó lật mặt sau của thẻ.Sau khi xong, hãy dừng quay. Bước 2 Kiểm tra dụng cụ (Tối đa 1 phút). Cách làm, Quay video thấy mặt, tay giơ lần lượt từng dụng cụ dùng cho bài thực hành và nói rõ tên từng loại. Sau khi xong, hãy dừng quay. Bước 3: Thao tác thực hành (Tối đa 5 phút). Cách làm Quay video thấy rõ mặt và toàn bộ quá trình bạn thực hiện bài thi. Sau khi xong, hãy dừng quay.Hoàn tất, Sau khi đã có đủ 3 video, bạn hãy chọn các file vừa quay và tải lên (upload) tương ứng vào từng bước trên hệ thống để hoàn thành bài thi nhé!');
+    if(!hasV1) speak('Chào mừng '+session.name+' đến với bài thi thực hành. Bạn sẽ cần quay và tải lên 3 video tương ứng với 3 bước sau đây, Bước 1 Xác thực danh tính (Tối đa 30 giây), Cách làm: Quay rõ mặt, tay cầm Căn cước công dân (CCCD) trước ngực, đọc to rõ họ tên và 4 số cuối CCCD, sau đó lật mặt sau của thẻ.Sau khi xong, hãy dừng quay. Bước 2 Kiểm tra dụng cụ (Tối đa 30 giây). Cách làm, Quay video thấy mặt, tay giơ lần lượt từng dụng cụ dùng cho bài thực hành và nói rõ tên từng loại. Sau khi xong, hãy dừng quay. Bước 3: Thao tác thực hành (Tối đa 10 phút). Cách làm Quay video thấy rõ mặt và toàn bộ quá trình bạn thực hiện bài thi. Sau khi xong, hãy dừng quay.Hoàn tất, Sau khi đã có đủ 3 video, bạn hãy chọn các file vừa quay và tải lên (upload) tương ứng vào từng bước trên hệ thống để hoàn thành bài thi nhé!');
   }
 
-  async function handleFile(event, stepId) {
+    async function handleFile(event, stepId) {
     const file = event.target.files[0];
     if(!file) return;
 
@@ -1920,7 +1920,7 @@ const t4 = (()=>{
       return;
     }
 
-    // CHẶN CỨNG: Nếu video được quay cách đây quá 60 phút -> Báo lỗi không cho up
+    // Cảnh báo nếu thời gian quay cách hiện tại quá lâu (ví dụ > 60 phút)
     const timeDiff = now.getTime() - lastMod.getTime();
     if (timeDiff > 60 * 60 * 1000) {
       alert('⚠️ LỖI: Video bạn chọn đã được quay cách đây hơn 60 phút!\n\nVui lòng quay lại video mới ngay bây giờ để đảm bảo tính công bằng của kỳ thi.');
@@ -1940,7 +1940,7 @@ const t4 = (()=>{
     const btn = document.querySelector(`#t4-step-${stepId} button`);
     if(btn) { btn.disabled = true; btn.innerText = '⏳ Đang xử lý...'; }
 
-            try {
+    try {
       await uploadChunks(file, fileName, stepId, (sent, total, text) => {
         fill.style.width = (sent / total * 100) + '%';
         msg.innerText = text;
@@ -1953,9 +1953,9 @@ const t4 = (()=>{
       if (student) student['videoBuoc' + stepId] = 'Đã tải lên'; 
       
       renderWelcome(); 
-    } catch(e) {
 
     } catch(e) {
+      // PHẦN XỬ LÝ LỖI ĐÃ ĐƯỢC BỔ SUNG ĐẦY ĐỦ
       msg.innerHTML = '<span style="color:#e74c3c">❌ Lỗi: ' + e.message + '</span>';
       if(btn) { btn.disabled = false; btn.innerText = `📁 Chọn Video Bước ${stepId}`; }
       event.target.value = '';
