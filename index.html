@@ -311,12 +311,19 @@ button{font-family:inherit}
     margin-bottom: 8px;
     text-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
 }
+@keyframes blinkCode {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0.7; transform: scale(1.03); }
+}
 @keyframes pulseBorder {
     0% { border-color: #fca5a5; box-shadow: 0 0 0 rgba(220, 38, 38, 0); }
     100% { border-color: #ef4444; box-shadow: 0 0 15px rgba(220, 38, 38, 0.4); }
 }
-}
 .t4-code-note {
+    font-size: 13px;
+    color: #b45309;
+    font-style: italic;
+}
     font-size: 13px;
     color: #b45309;
     font-style: italic;
@@ -505,11 +512,13 @@ button{font-family:inherit}
       </div>
       <div class="form-row">
         <div class="field"><label>Điện thoại</label><input id="t1-phone" type="tel" pattern="(0[35789])[0-9]{8}" placeholder="09xxxxxxxx"></div>
-        <div class="field"><label>Thời gian học nghề</label>
-          <div class="radio-g">
-            <label><input type="radio" name="exp" value="Dưới 3 tháng"> Dưới 3 tháng</label>
-            <label><input type="radio" name="exp" value="Trên 3 tháng"> Trên 3 tháng</label>
-          </div>
+               <div class="field">
+          <label>Thời gian đã học nghề</label>
+          <select id="t1-exp">
+            <option value="">— Chọn thời gian —</option>
+            <option value="Từ 3 - 6 tháng">Từ 3 - 6 tháng</option>
+            <option value="Trên 1 năm">Trên 1 năm</option>
+          </select>
         </div>
       </div>
       <div class="form-row full">
@@ -640,7 +649,7 @@ button{font-family:inherit}
     </div>
   </div>
   <div id="t3-result" class="hidden">
-    <div class="t3-result"><div class="t3-status" id="t3-status"></div><div class="t3-score"><span id="t3-score-num">0</span><small>/30</small></div><div id="t3-msg" style="margin-top:14px;font-size:15px;line-height:1.6;color:#ccc"></div></div>
+    <div class="t3-result"><div class="t3-status" id="t3-status"></div><div class="t3-score"><span id="t3-score-num">0</span><small>/30</small></div><div id="t3-msg" style="margin-top:14px;font-size:15px;line-height:1.6;color:#334155"></div>
     <div id="t3-review"></div>
     <div style="text-align:center;margin:24px 0"><button class="btn-main" style="max-width:280px" onclick="location.reload()">🔄 Về Trang Chủ</button></div>
   </div>
@@ -683,6 +692,19 @@ button{font-family:inherit}
     </div>
   </div>
 </div>
+<!-- MÀN HÌNH CHẶN ZALO -->
+<div id="zalo-warning-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98); z-index: 99999; justify-content: center; align-items: center; flex-direction: column; color: white; text-align: center; padding: 20px; font-family: 'Inter', sans-serif;">
+  <div style="font-size: 70px; margin-bottom: 20px;">⚠️</div>
+  <h2 style="color: #ef4444; font-size: 24px; margin-bottom: 10px; font-weight: 800;">ZALO KHÔNG HỖ TRỢ ÂM THANH</h2>
+  <p style="font-size: 16px; line-height: 1.6; max-width: 400px; margin-bottom: 20px;">
+    Để nghe được giọng giảng viên và bật Camera thi, vui lòng:<br><br>
+    1. Bấm vào biểu tượng <b>3 chấm (...)</b> ở góc phải trên cùng.<br>
+    2. Chọn <b>"Mở bằng Trình duyệt"</b> (Chrome hoặc Safari).
+  </p>
+  <button onclick="copyLinkZalo()" style="background: #3b82f6; color: white; border: none; padding: 14px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(59,130,246,0.3); transition: 0.2s;">
+    📋 Sao chép Link để mở
+  </button>
+</div>
 <div id="loading" class="hidden"><div class="spin"></div><span id="loading-text">Đang xử lý...</span></div>
 
 <!-- Data scripts -->
@@ -694,9 +716,6 @@ button{font-family:inherit}
    ═══════════════════════════════════════════════════════════ */
 const URL_CHINH = 'https://script.google.com/macros/s/AKfycbwcgtVG55gkjoJq4UQyhxNnpQ74gbLUqbDhLlKAsh33_qiAEDWWYOqb9G7h2eAgR8xPYw/exec';
 const URL_VIDEO = 'https://script.google.com/macros/s/AKfycby7CENE4U-2PYQ_rIf98zTZPohwB8wnsyut241gkNYMY71PrBcTWVRNN_GkuT0i2sB0/exec';
-const COZE_BOT_ID = '7708044100599152645';
-const COZE_TOKEN = 'pat_lO9qJF3Cme0LOo4Dv9Fz3HvYjFbi35c0wDjvpG9B7P7CCOblHiqA9t2G6u10lLP1';
-const PROXY = 'https://cors-anywhere.herokuapp.com/';
 const SECRET_VIDEO_TOKEN = 'newstar_thi_2026_xyz_abc_123';
 
 const CONFIG = {
@@ -876,6 +895,21 @@ document.addEventListener("visibilitychange", function() {
         if (t3v && t3v.srcObject && t3v.paused) { t3v.play().catch(e=>{}); }
     }
 });
+// Phát hiện Zalo và hiển thị cảnh báo
+if (/Zalo/i.test(navigator.userAgent)) {
+    const zaloOverlay = document.getElementById('zalo-warning-overlay');
+    if (zaloOverlay) zaloOverlay.style.display = 'flex';
+}
+
+// Hàm sao chép link
+function copyLinkZalo() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Đã sao chép link!\n\nVui lòng mở ứng dụng Chrome hoặc Safari, sau đó dán link vào thanh địa chỉ để tiếp tục học/thi.');
+    }).catch(() => {
+        alert('Không thể tự động sao chép. Vui lòng bấm giữ vào thanh địa chỉ để sao chép link.');
+    });
+}
 document.addEventListener('touchstart', initSpeechEngine, {once:true});
 document.addEventListener('keydown', initSpeechEngine, {once:true});
 
@@ -1292,7 +1326,7 @@ async function submitReg(){
     const dob = val('t1-dob');
     const email = val('t1-email');
     const phone = val('t1-phone');
-    const experience = document.querySelector('input[name="exp"]:checked')?.value || '';
+    const experience = val('t1-exp');
     const address = val('t1-address');
     const contactPhone = val('t1-contact-phone');
     const consent = $('t1-consent').checked;
@@ -1368,7 +1402,10 @@ const t2 = (()=>{
       setTimeout(loadVoices, 300);
     }
   }
-  if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged = loadVoices;}
+  if('speechSynthesis' in window){
+    loadVoices();
+    speechSynthesis.addEventListener('voiceschanged', loadVoices);
+  }
 
   async function startCam(){
     if(stream) return;
@@ -1674,16 +1711,29 @@ const t2 = (()=>{
   async function askCoze(q){
     $('t2-status').innerText = '🧠 Giảng viên đang soạn giáo án';
     const btnLec = $('t2-lecture'), btnNxt = $('t2-next'), btnMic = $('t2-mic');
-    if(btnLec) btnLec.disabled = true; if(btnNxt) btnNxt.disabled = true; if(btnMic) btnMic.disabled = true;
-    try{
-      const r = await fetch(PROXY+'https://api.coze.com/open_api/v2/chat',{method:'POST',headers:{'Authorization':'Bearer '+COZE_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({bot_id:COZE_BOT_ID,user:session.cccd,query:q,stream:false})});
-      if(r.status===403){ alert('MẠNG BỊ KHÓA! Bấm "Mở khóa Mạng".'); $('t2-unlock').style.display = 'block'; await speakWait('Đường truyền bị khóa.'); return; }
-      const d = await r.json();
-      let msg = null;
-      if(d.messages && Array.isArray(d.messages)) msg = d.messages.find(m=>m.role==='assistant'&&(m.type==='answer'||m.type==='text'));
-      if(msg && msg.content){ await speakWait(msg.content.replace(/[*#]/g,'').trim()); }
-    }catch(e){ await speakWait('Mạng lỗi, em kiểm tra kết nối nhé.'); } 
-    finally { if(btnLec && btnLec.style.display !== 'none') btnLec.disabled = false; if(btnNxt && btnNxt.style.display !== 'none') btnNxt.disabled = false; if(btnMic) btnMic.disabled = false; }
+    if(btnLec) btnLec.disabled = true;
+    if(btnNxt) btnNxt.disabled = true;
+    if(btnMic) btnMic.disabled = true;
+
+    try {
+      const res = await apiCall(URL_CHINH, {
+        action: 'proxyCoze',
+        user: session.cccd,
+        query: q
+      });
+
+      if (res && res.success && res.reply) {
+        await speakWait(res.reply.replace(/[*#]/g, '').trim());
+      } else {
+        await speakWait('Hệ thống đang bận, em thử lại sau ít giây nhé.');
+      }
+    } catch (e) {
+      await speakWait('Mạng lỗi, em kiểm tra kết nối nhé.');
+    } finally {
+      if(btnLec && btnLec.style.display !== 'none') btnLec.disabled = false;
+      if(btnNxt && btnNxt.style.display !== 'none') btnNxt.disabled = false;
+      if(btnMic) btnMic.disabled = false;
+    }
   }
 
   async function mic(){
@@ -2305,7 +2355,8 @@ const t4 = (()=>{
         viVoice2 = vs.filter(v=>!male.test(v.name))[0] || vs[0];
       }
     };
-    loadV(); speechSynthesis.onvoiceschanged = loadV;
+    loadV();
+    speechSynthesis.addEventListener('voiceschanged', loadV);
   }
 
   function speak(text){
@@ -2355,20 +2406,32 @@ const t4 = (()=>{
   }
 
   function renderUploadScreen(){
+    const studentCode = generateStudentCode(session.cccd);
     $('t4-content').innerHTML = `
       <div class="t4-steps">
         <div class="t4-step-btn active">1. Mở Form</div>
         <div class="t4-step-btn">2. Upload Video</div>
         <div class="t4-step-btn">3. Xác nhận</div>
       </div>
+      <div class="t4-code-container">
+        <div class="t4-code-label">MÃ XÁC NHẬN CỦA BẠN HÔM NAY</div>
+        <div class="t4-code-display">${studentCode}</div>
+        <div class="t4-code-note">⚠️ Bạn ghi nhớ mã này và ĐỌC TO khi cầm CCCD quay video ở bước 1.</div>
+      </div>
+      <div class="t4-video-tutorial-bar">
+        <button type="button" class="t4-video-tutorial-btn" onclick="openT4Video()">
+          <i class="fas fa-play-circle"></i>
+          Xem Video Hướng Dẫn Quay Bài Thi Thực Hành
+        </button>
+      </div>
       <div class="t4-box">
-        <h3>💅 HƯỚNG DẪN NỘP BÀI THI THỰC HÀNH </h3>
-        <p>Bước 1: Bấm vào nút<b> "BẤM VÀO ĐÂY UPLOAD VIDEO BÀI THI" </b> bên dưới để tải lên video bài thi thực hành của bạn.<br> Bước 2: Sau khi quá trình tải lên hoàn tất, hãy quay lại trang này và bấm vào nút <b>"BẤM VÀO ĐÂY SAU KHI ĐÃ UPLOAD XONG"</b>để xác nhận nộp bài.</p>
+        <h3>💅 HƯỚNG DẪN NỘP BÀI THI THỰC HÀNH</h3>
+        <p>Bước 1: Bấm vào nút <b>"BẤM VÀO ĐÂY UPLOAD VIDEO BÀI THI"</b> bên dưới để tải lên video bài thi thực hành của bạn.<br>Bước 2: Sau khi quá trình tải lên hoàn tất, hãy quay lại trang này và bấm vào nút <b>"BẤM VÀO ĐÂY SAU KHI ĐÃ UPLOAD XONG"</b> để xác nhận nộp bài.</p>
         <button class="btn-upload" onclick="t4.openForm()">📤 BƯỚC 1: BẤM VÀO ĐÂY UPLOAD VIDEO BÀI THI</button>
         <button id="t4-confirm-btn" class="btn-upload" style="background:#f59e0b;margin-top:16px;" onclick="t4.confirmUploaded()">✅ BƯỚC 2: BẤM VÀO ĐÂY SAU KHI ĐÃ UPLOAD XONG</button>
         <div id="t4-countdown-box" class="hidden" style="margin-top:20px;padding:16px;background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;text-align:center;">
           <p style="margin:0 0 8px;color:#92400e;font-weight:700;">⏳ Vui lòng chờ 1 phút để hệ thống đồng bộ video...</p>
-          <div id="t4-countdown-val" style="font-size:36px;font-weight:900;color:#ef4444;font-variant-numeric:tabular-nums;">03:00</div>
+          <div id="t4-countdown-val" style="font-size:36px;font-weight:900;color:#ef4444;font-variant-numeric:tabular-nums;">01:00</div>
         </div>
         <button id="t4-recheck-btn" class="btn-upload hidden" style="background:#22c55e;margin-top:16px;" onclick="t4.recheck()">🔄 TÔI ĐÃ UPLOAD XONG, KIỂM TRA LẠI</button>
         <p style="margin-top:20px;font-size:12px;color:#94a3b8;">⚠️ Nếu gặp sự cố khi upload, vui lòng liên hệ Hotline: <b>0879383389</b></p>
@@ -2504,28 +2567,31 @@ if(session){
   });
 }
 /* ═══════════════════════════════════════════════════════════
-   XỬ LÝ VIDEO HƯỚNG DẪN TAB 4
+   XỬ LÝ VIDEO HƯỚNG DẪN & MÃ XÁC NHẬN TAB 4
    ═══════════════════════════════════════════════════════════ */
 function openT4Video() {
-    const modal  = document.getElementById('t4-video-modal');
-    const iframe = document.getElementById('t4-video-iframe');
-    if (!modal || !iframe) return;
-    // Link YouTube Shorts của bạn đã được chuyển sang dạng nhúng
-    iframe.src = 'https://www.youtube-nocookie.com/embed/NCqng7CoVAA?autoplay=1&rel=0&modestbranding=1';
+    const modal = document.getElementById('t4-video-modal');
+    const video = document.getElementById('t4-video-player');
+    if (!modal || !video) return;
+
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    video.play().catch(err => console.log("Trình duyệt chặn autoplay:", err));
 }
 
 function closeT4Video() {
-    const modal  = document.getElementById('t4-video-modal');
-    const iframe = document.getElementById('t4-video-iframe');
-    if (!modal || !iframe) return;
+    const modal = document.getElementById('t4-video-modal');
+    const video = document.getElementById('t4-video-player');
+    if (!modal) return;
+
     modal.classList.add('hidden');
-    iframe.src = ''; // Dừng video khi đóng
     document.body.style.overflow = '';
+    if (video) {
+        video.pause();
+        video.currentTime = 0;
+    }
 }
 
-// Đóng bằng phím ESC
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         const modal = document.getElementById('t4-video-modal');
@@ -2533,47 +2599,15 @@ document.addEventListener('keydown', function (e) {
     }
 });
 
-// TỰ ĐỘNG CHÈN NÚT ĐỎ (Dùng setInterval để đảm bảo 100% nút sẽ hiện ra)
-function openT4Video() {
-    const modal  = document.getElementById('t4-video-modal');
-    const video  = document.getElementById('t4-video-player');
-    
-    if (!modal) { alert('LỖI: Không tìm thấy khung Popup HTML!'); return; }
-    if (!video) { alert('LỖI: Không tìm thấy thẻ Video!'); return; }
-    
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    
-    video.play().catch(function(error) {
-        console.log("Trình duyệt chặn autoplay:", error);
-    });
-}
-
-function closeT4Video() {
-    const modal  = document.getElementById('t4-video-modal');
-    const video  = document.getElementById('t4-video-player');
-    if (!modal) return;
-    
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
-    
-    if (video) {
-        video.pause();
-        video.currentTime = 0; 
-    }
-}
-// Hàm tạo mã code ngẫu nhiên 4 ký tự (Dựa trên CCCD + Ngày hôm nay)
 function generateStudentCode(cccd) {
     const d = new Date();
     const dateStr = String(d.getDate()).padStart(2, '0') + String(d.getMonth() + 1).padStart(2, '0') + d.getFullYear();
     const seed = String(cccd) + dateStr + "NEWSTAR_SECRET_2026";
-    
     let hash = 0;
     for (let i = 0; i < seed.length; i++) {
         hash = (hash << 5) - hash + seed.charCodeAt(i);
         hash |= 0;
     }
-    
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let code = "";
     let temp = Math.abs(hash);
