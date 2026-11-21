@@ -1714,6 +1714,46 @@ const t3 = (()=>{
       if(examTime && Date.now() < unlockTime){
          html += '<div class="lock-box"><div class="lock-title">⏳ TAB 4 MỞ KHÓA VÀO NGÀY</div><div class="lock-date">'+new Date(unlockTime).toLocaleDateString('vi-VN')+'</div></div>';
       }
+      
+      // Hiển thị nút xổ xuống chi tiết bài làm
+      if (student.examJson) {
+          try {
+              const detailsData = JSON.parse(student.examJson);
+              html += `
+              <details style="background:#fff; padding:20px; border-radius:12px; margin-top:20px; border:1px solid #e2e8f0; text-align:left;">
+                  <summary style="cursor:pointer; font-size:16px; font-weight:bold; color:var(--brand-blue); outline:none;">
+                      📋 Xem chi tiết bài làm (Bấm để mở/đóng)
+                  </summary>
+                  <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px;">
+              `;
+              detailsData.forEach((d, idx) => {
+                  const p = d.p;
+                  let optsHtml = '';
+                  p.opts.forEach((opt, oIdx) => {
+                      const letter = String.fromCharCode(65 + oIdx);
+                      const isCorrect = (letter === d.expected);
+                      const isGiven = (letter === d.given);
+                      let style = 'margin-top: 6px; padding: 6px 10px; border-radius: 4px; font-size: 13px;';
+                      if (isCorrect) style += ' background: #dcfce7; color: #166534; font-weight: bold;';
+                      else if (isGiven && !d.ok) style += ' background: #fee2e2; color: #991b1b; text-decoration: line-through;';
+                      else style += ' color: #475569;';
+                      const cleanOpt = opt.replace(/^[A-D]\.\s*/,'');
+                      optsHtml += `<div style="${style}">${letter}. ${cleanOpt}</div>`;
+                  });
+                  html += `
+                  <div class="t3-review-item ${d.ok?'c':'w'}">
+                      <div class="t3-rq" style="margin-bottom: 10px;">Câu ${idx + 1}: ${p.q}</div>
+                      <div style="display:flex; flex-direction:column; gap:4px; margin-bottom: 10px;">${optsHtml}</div>
+                      <div class="t3-ra">
+                          <span class="${d.ok?'c':'w'}">Bạn chọn: ${d.given || '(chưa chọn)'} ${d.ok ? '✓' : '✗'}</span> 
+                          · Đáp án đúng: <span class="c">${d.expected}</span>
+                      </div>
+                  </div>`;
+              });
+              html += `</div></details>`;
+          } catch (e) { console.error('Lỗi hiển thị JSON', e); }
+      }
+
       $('t3-welcome').innerHTML = html;
       return;
     }
@@ -1922,7 +1962,19 @@ const t3 = (()=>{
     
     showLoad('Đang nộp bài...');
     try{
-      const d = await apiCall(URL_CHINH,{action:'submitExam',cccd:session.cccd,major:session.major,score:correct,correct:correct});
+            // Định dạng mới: 1.D/D | 2.B/C | 3.A/C
+            const detailStr = details.map(d => `${d.i + 1}.${d.given || '?'}/${d.expected}`).join(' | ');
+      const examJsonStr = JSON.stringify(details); // Lưu toàn bộ chi tiết câu hỏi
+      
+      const d = await apiCall(URL_CHINH,{
+          action: 'submitExam',
+          cccd: session.cccd,
+          major: session.major,
+          score: correct,
+          correct: correct,
+          examDetails: detailStr,
+          examJson: examJsonStr
+      });
       if(!d.success){hideLoad();alert(d.message||'Lỗi');return;}
       await refreshStudent();
       hideLoad();
@@ -1930,42 +1982,78 @@ const t3 = (()=>{
     }catch(e){hideLoad();alert('Lỗi: '+e.message)}
   }
 
-  function renderResult(score, details){
+    function renderResult(score, details){
     isExamActive = false;
     unlockTabs();
     if(camMonitorInt) clearInterval(camMonitorInt);
     $('t3-running').classList.add('hidden');
     $('t3-result').classList.remove('hidden');
+    
     const pass = score>=CONFIG.passThreshold;
     const st = $('t3-status');
     st.className = 't3-status '+(pass?'pass':'fail');
     st.innerText = pass?'ĐẠT':'KHÔNG ĐẠT';
     $('t3-score-num').innerText = score;
+    
     if (pass) {
       $('t3-msg').innerHTML = '🎉 Chúc mừng! Bạn đã đạt bài thi lý thuyết.';
     } else {
-      // Tính toán ngày thi lại dựa vào cấu hình
       const retakeDate = new Date();
       retakeDate.setDate(retakeDate.getDate() + CONFIG.lockRetakeExamDays);
-      
       const daysOfWeek = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
       const dayName = daysOfWeek[retakeDate.getDay()];
       const d = String(retakeDate.getDate()).padStart(2, '0');
       const m = String(retakeDate.getMonth() + 1).padStart(2, '0');
       const y = retakeDate.getFullYear();
-      
       $('t3-msg').innerHTML = 'Rớt. Bạn có thể thi lại vào <b style="color:#ea580c; font-size:16px;">' + dayName + ', ngày ' + d + '/' + m + '/' + y + '</b>.';
     }
     
-    const rev = $('t3-review'); rev.innerHTML='';
+        const rev = $('t3-review'); 
+    let reviewHtml = `
+    <details style="background:#fff; padding:20px; border-radius:12px; border:1px solid var(--border-color); margin-top:20px; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
+        <summary style="cursor:pointer; font-size:16px; font-weight:bold; color:var(--brand-blue); outline:none;">
+            📋 Xem chi tiết bài làm (Bấm để mở/đóng)
+        </summary>
+        <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px;">
+    `;
+
     details.forEach((d,idx)=>{
       const p = d.p;
-      const div = document.createElement('div');
-      div.className = 't3-review-item '+(d.ok?'c':'w');
-      div.innerHTML = '<div class="t3-rq">Câu '+(idx+1)+': '+p.q+'</div>'+
-        '<div class="t3-ra"><span class="'+(d.ok?'c':'w')+'">Bạn chọn: '+(d.given||'(chưa chọn)')+'</span> · Đáp án: <span class="c">'+d.expected+'</span></div>';
-      rev.appendChild(div);
+      let optsHtml = '';
+      p.opts.forEach((opt, oIdx) => {
+        const letter = String.fromCharCode(65 + oIdx);
+        const isCorrect = (letter === d.expected);
+        const isGiven = (letter === d.given);
+        
+        let style = 'margin-top: 6px; padding: 6px 10px; border-radius: 4px; font-size: 13px;';
+        if (isCorrect) {
+            style += ' background: #dcfce7; color: #166534; font-weight: bold;';
+        } else if (isGiven && !d.ok) {
+            style += ' background: #fee2e2; color: #991b1b; text-decoration: line-through;';
+        } else {
+            style += ' color: #475569;';
+        }
+        
+        const cleanOpt = opt.replace(/^[A-D]\.\s*/,'');
+        optsHtml += `<div style="${style}">${letter}. ${cleanOpt}</div>`;
+      });
+
+      reviewHtml += `
+        <div class="t3-review-item ${d.ok?'c':'w'}">
+            <div class="t3-rq" style="margin-bottom: 10px;">Câu ${idx + 1}: ${p.q}</div>
+            <div style="display:flex; flex-direction:column; gap:4px; margin-bottom: 10px;">
+                ${optsHtml}
+            </div>
+            <div class="t3-ra">
+                <span class="${d.ok?'c':'w'}">Bạn chọn: ${d.given || '(chưa chọn)'} ${d.ok ? '✓' : '✗'}</span> 
+                · Đáp án đúng: <span class="c">${d.expected}</span>
+            </div>
+        </div>
+      `;
     });
+    reviewHtml += `</div></details>`;
+    rev.innerHTML = reviewHtml;
+    
     if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
     $('t3-cam').classList.add('hidden');
   }
