@@ -20,7 +20,7 @@
     --bg-body: #f8fafc;
     --bg-card: #ffffff;
     --text-main: #1e293b;
-    --text-muted: #64748b;
+    --text-muted: #303a49;
     --border-color: #e2e8f0;
 }
 
@@ -704,7 +704,7 @@ const CONFIG = {
   lockLessonDays: 1,
   lockRetakeExamDays: 1,
   lockTab3Days: 3,
-  lockTab4Days: 7,
+  lockTab4Days: 3,
   examQuestions: 30,
   passThreshold: 25,
   examDuration: 45*60
@@ -735,7 +735,46 @@ async function apiCall(url, body){
 }
 function fmtTime(s){const m=String(Math.floor(s/60)).padStart(2,'0'),ss=String(s%60).padStart(2,'0');return m+':'+ss}
 function sanitizeName(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_')}
+function hideCameraWarning() {
+    const overlay = $('camera-warning-overlay');
+    if (overlay) overlay.classList.remove('show');
+    if (window.camWarnInt) {
+        clearInterval(window.camWarnInt);
+        window.camWarnInt = null;
+    }
+}
 
+function isCameraCovered(videoElement) {
+    if (!videoElement || videoElement.videoWidth === 0) return false;
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 24;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        let totalLum = 0;
+        let minLum = 255, maxLum = 0;
+        const pixelCount = canvas.width * canvas.height;
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i+1], b = data[i+2];
+            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+            totalLum += lum;
+            if (lum < minLum) minLum = lum;
+            if (lum > maxLum) maxLum = lum;
+        }
+        const avgLum = totalLum / pixelCount;
+        const variance = maxLum - minLum;
+        console.log("Độ sáng TB:", avgLum.toFixed(1), "| Độ chênh lệch (phẳng):", variance.toFixed(1));
+        if (avgLum < 20 && variance < 20) return true;
+        if (avgLum > 230 && variance < 20) return true;
+        if (variance < 40) return true;
+        return false;
+    } catch (e) {
+        return false;
+    }
+}
 function getUnlockTime(baseTimeIso, daysToWait) {
   if (!baseTimeIso) return 0;
   const d = new Date(baseTimeIso);
@@ -827,6 +866,16 @@ function initSpeechEngine(){
   }catch(e){}
 }
 document.addEventListener('click', initSpeechEngine, {once:true});
+
+// Tự động đánh thức Camera nếu bị trình duyệt ngủ đông (chuyển tab, khóa màn hình)
+document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "visible") {
+        const t2v = document.getElementById('t2-video');
+        const t3v = document.getElementById('t3-video');
+        if (t2v && t2v.srcObject && t2v.paused) { t2v.play().catch(e=>{}); }
+        if (t3v && t3v.srcObject && t3v.paused) { t3v.play().catch(e=>{}); }
+    }
+});
 document.addEventListener('touchstart', initSpeechEngine, {once:true});
 document.addEventListener('keydown', initSpeechEngine, {once:true});
 
@@ -1348,6 +1397,11 @@ const t2 = (()=>{
     
     camMonitorInt = setInterval(() => {
       if(window.isLoggingOut || !isLearningActive || !stream) return;
+      
+      // Nếu video bị đứng (do chuyển tab), tự động play lại
+      const v2 = $('t2-video');
+      if (v2 && v2.paused) { v2.play().catch(e=>{}); }
+      
       const track = stream.getVideoTracks()[0];
       
       // 1. Kiểm tra mất kết nối vật lý
@@ -1369,7 +1423,7 @@ const t2 = (()=>{
         return;
       }
 
-      // 2. KIỂM TRA BỊ CHE (Chạy mỗi 3 giây)
+            // 2. KIỂM TRA BỊ CHE (Chạy mỗi 3 giây)
       if (isCameraCovered($('t2-video'))) {
           coverCount++;
           if (coverCount >= 3) {
@@ -1826,12 +1880,17 @@ const t3 = (()=>{
     hideLoad();
   }
 
-    function startCameraMonitor() {
+      function startCameraMonitor() {
     if(camMonitorInt) clearInterval(camMonitorInt);
     let coverCount = 0;
     
     camMonitorInt = setInterval(() => {
       if(window.isLoggingOut || !isExamActive || !stream) return;
+
+      // Nếu video bị đứng (do chuyển tab), tự động play lại
+      const v3 = $('t3-video');
+      if (v3 && v3.paused) { v3.play().catch(e=>{}); }
+      
       const track = stream.getVideoTracks()[0];
       
       if(!track || track.readyState !== 'live' || $('t3-video').paused || $('t3-video').readyState === 0) {
@@ -1846,14 +1905,14 @@ const t3 = (()=>{
             
             apiCall(URL_CHINH, { action: 'markExamCameraFail', cccd: session.cccd, major: session.major })
             .then(() => {
-                alert('⏳ Đã quá 120s không có Camera. Bài thi sẽ bị HỦY. Bạn phải thi lại sau 24h!');
+                alert('⏳ Đã quá 120s không có Camera. Bài thi bị HỦY. Bạn phải thi lại vào ngày được thông báo ở Tab 3!');
                 window.location.reload();
             });
         });
         return;
       }
 
-      // KIỂM TRA BỊ CHE
+                              // KIỂM TRA BỊ CHE
       if (isCameraCovered($('t3-video'))) {
           coverCount++;
           if (coverCount >= 3) {
@@ -1867,7 +1926,6 @@ const t3 = (()=>{
                       $('t3-cam').classList.add('hidden');
                       unlockTabs();
                       
-                      // Gọi API đánh trượt
                       apiCall(URL_CHINH, { action: 'markExamCameraFail', cccd: session.cccd, major: session.major })
                       .then(() => {
                           alert('⚠️ PHÁT HIỆN CAMERA BỊ CHE QUÁ 120s! Bài thi bị HỦY. Bạn phải thi lại sau 24h!');
@@ -2069,10 +2127,14 @@ const t3 = (()=>{
    ═══════════════════════════════════════════════════════════ */
 let camWarnInt = null;
 // Hàm kiểm tra camera có bị che (băng dính, giấy...) hay không
+const coverCheckCanvas = document.createElement('canvas');
+coverCheckCanvas.width = 32;
+coverCheckCanvas.height = 24;
+
 function isCameraCovered(videoElement) {
     if (!videoElement || videoElement.videoWidth === 0) return false;
-    
     try {
+        // Khai báo canvas ở đây (Lỗi trước đó là do thiếu dòng này)
         const canvas = document.createElement('canvas');
         canvas.width = 32;
         canvas.height = 24;
@@ -2097,16 +2159,14 @@ function isCameraCovered(videoElement) {
         const avgLum = totalLum / pixelCount;
         const variance = maxLum - minLum;
         
-        console.log(`[Camera Check] Sáng TB: ${avgLum.toFixed(1)} | Chênh lệch: ${variance.toFixed(1)}`);
-
         if (avgLum < 20 && variance < 20) return true;
         if (avgLum > 230 && variance < 20) return true;
-        if (variance < 15) return true; // Bị che bằng vật phẳng (tay, bìa, vải...)
+        if (variance < 15) return true;
         
         return false;
     } catch (e) {
-        console.error("LỖI ĐỌC CAMERA:", e);
-        return false;
+        console.error("LỖI ĐỌC CAMERA:", e); // In ra lỗi nếu có
+        return false; 
     }
 }
 function showCameraWarning(onTimeout) {
@@ -2170,13 +2230,32 @@ function captureFrameAsBase64(videoId) {
     }
     
     const canvas = document.createElement('canvas');
-    canvas.width = 640; canvas.height = 480;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    
+    // Nếu camera chưa kịp tải, dùng mặc định để tránh lỗi
+    if (vw === 0 || vh === 0) {
+        canvas.width = 640; canvas.height = 480;
+    } else {
+        // Giới hạn chiều dài tối đa là 720px để ảnh nhẹ, không tốn dung lượng
+        const maxSize = 720;
+        if (vw > vh) {
+            // Camera đang quay ngang (Máy tính hoặc đt xoay ngang)
+            canvas.width = maxSize;
+            canvas.height = Math.round(maxSize * (vh / vw));
+        } else {
+            // Camera đang quay dọc (Điện thoại cầm dọc)
+            canvas.height = maxSize;
+            canvas.width = Math.round(maxSize * (vw / vh));
+        }
+    }
+
     const ctx = canvas.getContext('2d');
+    // Lật ảnh (mirror) để giống như soi gương
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     
     try {
-        // Vẽ trực tiếp không cần check readyState để tránh lỗi đơ trên mobile
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         return canvas.toDataURL('image/jpeg', 0.75).split(',')[1];
     } catch(e) {
